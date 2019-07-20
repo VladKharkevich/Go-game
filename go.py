@@ -26,15 +26,15 @@ def rungame():
                 pygame.quit()
                 quit()
         display.fill((255, 255, 255))
-        draw_board()
+        draw_board(go_board)
         click = pygame.mouse.get_pressed()
         if click[0] == 1:
-            make_step()
+            make_step(go_board)
         pygame.display.update()
         clock.tick(60)
 
 
-def draw_board():
+def draw_board(go_board):
     pygame.draw.rect(display, (0xcd, 0x85, 0x3f),
                      (150, 50, 30 + 18 * 25, 30 + 18 * 25))
     for i in range(19):
@@ -42,17 +42,36 @@ def draw_board():
                          (165 + 25 * i, 65), (165 + 25 * i, 515), 3)
         pygame.draw.line(display, (0, 0, 0),
                          (165, 65 + 25 * i), (615, 65 + 25 * i), 3)
+    for i in range(19):
+        for j in range(19):
+            if go_board.board[i][j] == 'black':
+                pygame.draw.circle(display, (0, 0, 0),
+                                   (165 + 25 * i, 65 + 25 * j), 12)
+            elif go_board.board[i][j] == 'white':
+                pygame.draw.circle(display, (255, 255, 255),
+                                   (165 + 25 * i, 65 + 25 * j), 12)
 
 
-def make_step():
+def make_step(go_board):
     global turn
     pos = pygame.mouse.get_pos()
-    if pos[0] in range(160, 571) and pos[1] in range(60, 521) and pos[0] % 25 in range(-5, 5) and pos[1] % 25 in range(-5, 5):
+    coord = find_coordinates(pos, go_board)
+    if coord:
         if turn:
-            pygame.draw.circle(display, (0, 0, 0), (pos[0], pos[1]), 12)
+            go_board.board[coord[0]][coord[1]] = 'black'
         else:
-            pygame.draw.circle(display, (255, 255, 255), (pos[0], pos[1]), 12)
+            go_board.board[coord[0]][coord[1]] = 'white'
         turn = not turn
+
+
+def find_coordinates(pos, go_board):
+    if (pos[0] in range(160, 621)) and (pos[1] in range(60, 521)) and (
+            pos[0] % 25 > 10 or pos[0] % 25 < 20) and (
+            pos[1] % 25 > 10 or pos[1] % 25 < 20):
+        coord = [(pos[0] - 160) // 25, (pos[1] - 60) // 25]
+        if go_board.board[coord[0]][coord[1]] == 'blank':
+            return coord
+    return None
 
 
 rungame()
