@@ -5,3 +5,4 @@ color = {
     'brown': (0xcd, 0x85, 0x3f),
     'green': (0, 100, 0)
 }
+FPS = 60

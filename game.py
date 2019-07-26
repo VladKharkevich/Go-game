@@ -1,10 +1,10 @@
 import pygame
-from settings import color
-import os
+from settings import color, FPS
+import os, sys
 
 
 pygame.init()
-
+clock = pygame.time.Clock()
 
 class Board:
 
@@ -56,6 +56,10 @@ class Board:
                 return coord
         return None
 
+    def make_pass(self):
+        self.turn = not self.turn
+        self.list_of_turns.append(None)
+
 
 class Button:
 
@@ -65,12 +69,12 @@ class Button:
         self.pos = pos
         self.is_pressed = False
         self.is_click = False
-        self.action = False
+        self.active = False
 
     def draw_button(self, surface):
         if (not pygame.mouse.get_pressed()[0] and self.is_pressed and 
              self.mouse_on_button()):
-            self.action = True
+            self.active = True
         self.click_button()
         if self.mouse_on_button() and self.is_pressed:
             pygame.draw.rect(surface, color['green'], (self.pos[0],
@@ -78,7 +82,7 @@ class Button:
         else:
             pygame.draw.rect(surface, color['brown'], (self.pos[0],
                  self.pos[1], self.size[0], self.size[1]))
-        font = pygame.font.Font(None, 60)
+        font = pygame.font.Font(None, 54)
         text_pass = font.render(self.name.upper(), 1, color['white'])
         lb_pass = text_pass.get_rect(center=[self.pos[i] + self.size[i] / 2
                                              for i in range(2)])
@@ -101,12 +105,74 @@ class Button:
             return True
         return False
 
-    def btn_function(self):
-        self.action = False
+
+class Game:
+
+    def __init__(self, display):
+        self.display = display
+        self.go_board = Board(19)
+        self.btn_pass = Button('pass', [150, 70], [700, 300])
+        self.play = True
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.go_board.make_step()
+            elif event.type== pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.play = False
+        self.display.fill(color['white'])
+        self.go_board.draw_board(self.display)
+        self.btn_pass.draw_button(self.display)
+        if self.btn_pass.active:
+            self.go_board.make_pass()
+            self.btn_pass.active = False
+        font = pygame.font.Font(None, 72)
+        if self.go_board.turn:
+            text = font.render("Black's turn", 1, color['green'])
+        else:
+            text = font.render("White's turn", 1, color['green'])
+        lbturn = text.get_rect(center=(400, 50))
+        self.display.blit(text, lbturn)
+
+    def run(self):
+        while self.play:
+            self.update_screen()
+            pygame.display.update()
+            clock.tick(FPS)
 
 
-class ButtonPass(Button):
-    def btn_function(self, board):
-        board.turn = not board.turn
-        board.list_of_turns.append(None)
-        self.action = False
+class MainMenu():
+
+    def __init__(self, display):
+        self.display = display
+        self.btn_start = Button('start', [200, 70], [350, 150])
+        self.btn_settings = Button('settings', [200, 70], [350, 250])
+        self.btn_exit = Button('exit', [200, 70], [350, 350])
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit() 
+        self.display.fill(color['white'])
+        self.btn_start.draw_button(self.display)
+        self.btn_settings.draw_button(self.display)
+        self.btn_exit.draw_button(self.display)
+        if self.btn_start.active:
+            game = Game(self.display)
+            game.run()
+            del game
+            self.btn_start.active = False
+        elif self.btn_exit.active:
+            sys.exit()
+
+
+    def run(self):
+        while True:
+            self.update_screen()
+            pygame.display.update()
+            clock.tick(FPS)
