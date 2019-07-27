@@ -1,10 +1,12 @@
 import pygame
 from settings import color, FPS
 import os, sys
+from widgets import Button, Notification
 
 
 pygame.init()
 clock = pygame.time.Clock()
+
 
 class Board:
 
@@ -22,7 +24,7 @@ class Board:
                                                    white_stone.get_height() // 4))
         self.turn = True
 
-    def draw_board(self, surface):
+    def draw(self, surface):
         pygame.draw.rect(surface, color['brown'],
                          (150, 80, 30 + 18 * 25, 30 + 18 * 25))
         for i in range(self.size):
@@ -61,51 +63,6 @@ class Board:
         self.list_of_turns.append(None)
 
 
-class Button:
-
-    def __init__(self, name, size, pos):
-        self.name = name
-        self.size = size
-        self.pos = pos
-        self.is_pressed = False
-        self.is_click = False
-        self.active = False
-
-    def draw_button(self, surface):
-        if (not pygame.mouse.get_pressed()[0] and self.is_pressed and 
-             self.mouse_on_button()):
-            self.active = True
-        self.click_button()
-        if self.mouse_on_button() and self.is_pressed:
-            pygame.draw.rect(surface, color['green'], (self.pos[0],
-                 self.pos[1], self.size[0], self.size[1]))
-        else:
-            pygame.draw.rect(surface, color['brown'], (self.pos[0],
-                 self.pos[1], self.size[0], self.size[1]))
-        font = pygame.font.Font(None, 54)
-        text_pass = font.render(self.name.upper(), 1, color['white'])
-        lb_pass = text_pass.get_rect(center=[self.pos[i] + self.size[i] / 2
-                                             for i in range(2)])
-        surface.blit(text_pass, lb_pass)
-
-    def click_button(self):
-        if pygame.mouse.get_pressed()[0]:
-            if not self.is_click:
-                self.is_click = True
-                if self.mouse_on_button():
-                    self.is_pressed = True
-        else:
-            self.is_click = False
-            self.is_pressed = False
-
-    def mouse_on_button(self):
-        if (pygame.mouse.get_pos()[0] in range(self.pos[0],
-             self.pos[0] + self.size[0])) and (pygame.mouse.get_pos()[1]
-             in range(self.pos[1], self.pos[1] + self.size[1])):
-            return True
-        return False
-
-
 class Game:
 
     def __init__(self, display):
@@ -117,16 +74,20 @@ class Game:
     def update_screen(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+                exit(self.display)
             elif event.type == pygame.MOUSEBUTTONUP:
                 self.go_board.make_step()
-            elif event.type== pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    self.play = False
+                    notification = Notification(self.display, 'Are you really want back to main menu?')
+                    notification.run()
+                    if notification.action:
+                        self.play = False
+                    del notification
+                    # self.play = False
         self.display.fill(color['white'])
-        self.go_board.draw_board(self.display)
-        self.btn_pass.draw_button(self.display)
+        self.go_board.draw(self.display)
+        self.btn_pass.draw(self.display)
         if self.btn_pass.active:
             self.go_board.make_pass()
             self.btn_pass.active = False
@@ -149,30 +110,71 @@ class MainMenu():
 
     def __init__(self, display):
         self.display = display
-        self.btn_start = Button('start', [200, 70], [350, 150])
-        self.btn_settings = Button('settings', [200, 70], [350, 250])
-        self.btn_exit = Button('exit', [200, 70], [350, 350])
+        self.btn_start = Button('start', [220, 70], [340, 150])
+        self.btn_settings = Button('settings', [220, 70], [340, 250])
+        self.btn_exit = Button('exit', [220, 70], [340, 350])
 
     def update_screen(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                quit() 
+                exit(self.display)
         self.display.fill(color['white'])
-        self.btn_start.draw_button(self.display)
-        self.btn_settings.draw_button(self.display)
-        self.btn_exit.draw_button(self.display)
+        self.btn_start.draw(self.display)
+        self.btn_settings.draw(self.display)
+        self.btn_exit.draw(self.display)
         if self.btn_start.active:
             game = Game(self.display)
             game.run()
             del game
             self.btn_start.active = False
+        elif self.btn_settings.active:
+            settings = Settings(self.display)
+            settings.run()
+            del settings
+            self.btn_settings.active = False
         elif self.btn_exit.active:
-            sys.exit()
-
+            exit(self.display)
+            self.btn_exit.active = False
 
     def run(self):
         while True:
             self.update_screen()
             pygame.display.update()
             clock.tick(FPS)
+
+
+class Settings:
+
+    def __init__(self, display):
+        self.display = display
+        self.btn_about_program = Button('program', [220, 70], [340, 200])
+        self.btn_rools = Button('rools', [220, 70], [340, 300])
+        self.btn_main_menu = Button('main menu', [220, 70], [340, 400])
+        self.show = True
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit(self.display)
+        self.display.fill(color['white'])
+        self.btn_about_program.draw(self.display)
+        self.btn_rools.draw(self.display)
+        self.btn_main_menu.draw(self.display)
+        if self.btn_main_menu.active:
+            self.show = False
+
+
+    def run(self):
+        while self.show:
+            self.update_screen()
+            pygame.display.update()
+            clock.tick(FPS)
+
+
+def exit(display):
+    notification = Notification(display, 'Are you really want to exit?')
+    notification.run()
+    if notification.action:
+        pygame.quit()
+        quit()
+    del notification
