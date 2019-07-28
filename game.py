@@ -1,7 +1,7 @@
 import pygame
 from settings import color, FPS
 import os, sys
-from widgets import Button, Notification
+from widgets import Button, Notification, Toggle
 
 
 pygame.init()
@@ -147,19 +147,30 @@ class Settings:
 
     def __init__(self, display):
         self.display = display
-        self.btn_about_program = Button('program', [220, 70], [340, 200])
-        self.btn_rools = Button('rools', [220, 70], [340, 300])
-        self.btn_main_menu = Button('main menu', [220, 70], [340, 400])
+        self.btn_about_program = Button('program', [170, 50], [375, 250], 40)
+        self.btn_rools = Button('rools', [170, 50], [375, 320], 40)
+        self.btn_main_menu = Button('main menu', [170, 50], [375, 390], 40)
+        self.tgl_music = Toggle([250, 130])
+        self.tgl_sound = Toggle([650, 130])
         self.show = True
 
     def update_screen(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit(self.display)
+        font = pygame.font.Font(None, 44)
         self.display.fill(color['white'])
         self.btn_about_program.draw(self.display)
         self.btn_rools.draw(self.display)
         self.btn_main_menu.draw(self.display)
+        self.tgl_music.draw(self.display)
+        self.tgl_sound.draw(self.display)
+        text_music = font.render("Music", 1, color['black'])
+        text_sound = font.render("Sound", 1, color['black'])
+        lbmusic = text_music.get_rect(center=(280, 100))
+        lbsound = text_sound.get_rect(center=(680, 100))
+        self.display.blit(text_music, lbmusic)
+        self.display.blit(text_sound, lbsound)
         if self.btn_main_menu.active:
             self.show = False
 
