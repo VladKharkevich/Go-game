@@ -81,7 +81,6 @@ class Notification:
             self.show = False
             self.action = True
             
-
     def run(self):
         while self.show:
             self.draw()
@@ -123,7 +122,6 @@ class Toggle:
             pygame.draw.circle(surface, color['white'], (self.pos[0], 
                                 self.pos[1] + int(self.size[1] / 2)), 
                                 int(self.size[1] / 2 - 3))
-
 
     def click_toggle(self):
         if pygame.mouse.get_pressed()[0]:

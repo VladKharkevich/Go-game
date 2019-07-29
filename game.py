@@ -58,9 +58,24 @@ class Board:
                 return coord
         return None
 
-    def make_pass(self):
+    def make_pass(self, surface):
         self.turn = not self.turn
-        self.list_of_turns.append(None)
+        try:
+            if not self.list_of_turns[-1]:
+                notification = Notification(surface, 'Game over. Do you want back to see replay?')
+                notification.run()
+                if notification.action:
+                    replay = Replay(surface, self.list_of_turns)
+                    replay.run()
+                    del replay
+                else:
+                    return False
+                del notification
+            else: 
+                self.list_of_turns.append(None)
+        except IndexError:
+            self.list_of_turns.append(None)
+        return True
 
 
 class Game:
@@ -79,17 +94,16 @@ class Game:
                 self.go_board.make_step()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    notification = Notification(self.display, 'Are you really want back to main menu?')
+                    notification = Notification(self.display, 'Do you really want back to main menu?')
                     notification.run()
                     if notification.action:
                         self.play = False
                     del notification
-                    # self.play = False
         self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_pass.draw(self.display)
         if self.btn_pass.active:
-            self.go_board.make_pass()
+            self.play = self.go_board.make_pass(self.display)
             self.btn_pass.active = False
         font = pygame.font.Font(None, 72)
         if self.go_board.turn:
@@ -174,6 +188,62 @@ class Settings:
         if self.btn_main_menu.active:
             self.show = False
 
+    def run(self):
+        while self.show:
+            self.update_screen()
+            pygame.display.update()
+            clock.tick(FPS)
+
+
+class Replay:
+
+    def __init__(self, display, list_of_turns):
+        self.list_of_turns = list_of_turns
+        self.current_step = 0
+        self.display = display
+        self.show = True
+        self.go_board = Board(19)
+        self.btn_prev = Button('prev', [150, 70], [700, 300])
+        self.btn_next = Button('next', [150, 70], [700, 400])
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit(self.display)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    notification = Notification(self.display, 'Do you really want back to main menu?')
+                    notification.run()
+                    if notification.action:
+                        self.show = False
+                    del notification
+        self.display.fill(color['white'])
+        self.go_board.draw(self.display)
+        self.btn_prev.draw(self.display)
+        self.btn_next.draw(self.display)
+        if self.btn_next.active:
+            if self.current_step < len(self.list_of_turns) - 1:
+                self.make_step_forward()
+            self.btn_next.active = False
+        if self.btn_prev.active:
+            if self.current_step > 0:
+                self.make_step_back()
+            self.btn_prev.active = False
+
+    def make_step_forward(self):
+        coord = self.list_of_turns[self.current_step]
+        if coord:
+            if self.current_step % 2 == 0:
+                self.go_board.board[coord[0]][coord[1]] = 'black'
+            else:
+                self.go_board.board[coord[0]][coord[1]] = 'white'
+        self.current_step += 1
+
+    def make_step_back(self):
+        self.current_step -= 1
+        coord = self.list_of_turns[self.current_step]
+        if coord:
+            self.go_board.board[coord[0]][coord[1]] = None
 
     def run(self):
         while self.show:
