@@ -1,6 +1,7 @@
 import pygame
 import os
 from settings import color
+import copy
 
 
 pygame.init()
@@ -11,8 +12,18 @@ class Board:
     def __init__(self, size):
         self.size = size
         self.board = [[None for i in range(size)] for j in range(size)]
-        self.list_of_turns = []
+        self.temp_for_rool_co = [[[None for i in range(size)] for j in range(size)],
+                                 [[None for i in range(size)] for j in range(size)]]
         self.turn = True
+        self.list_of_turns = []
+        image_w = pygame.image.load(os.path.join('images/white.png'))
+        self.image_w = pygame.transform.scale(image_w,
+                                              (image_w.get_width() // 4,
+                                               image_w.get_height() // 4))
+        image_b = pygame.image.load(os.path.join('images/black.png'))
+        self.image_b = pygame.transform.scale(image_b,
+                                              (image_b.get_width() // 4,
+                                               image_b.get_height() // 4))
 
     def draw(self, surface):
         pygame.draw.rect(surface, color['brown'],
@@ -24,8 +35,11 @@ class Board:
                              (165, 95 + 25 * i), (615, 95 + 25 * i), 3)
         for i in range(self.size):
             for j in range(self.size):
-                if self.board[i][j]:
-                    surface.blit(self.board[i][j].image,
+                if type(self.board[i][j]) == BlackStone:
+                    surface.blit(self.image_b,
+                                 (152 + 25 * i, 82 + 25 * j))
+                elif type(self.board[i][j]) == WhiteStone:
+                    surface.blit(self.image_w,
                                  (152 + 25 * i, 82 + 25 * j))
 
     def make_step(self):
@@ -33,24 +47,65 @@ class Board:
         coord = self.find_coordinates(pos)
         if coord:
             liberty = self.count_liberty(coord)
-            if liberty[0] > 0:
-                if self.turn:
-                    self.board[coord[0]][coord[1]] = BlackStone(liberty[1])
-                else:
-                    self.board[coord[0]][coord[1]] = WhiteStone(liberty[1])
-                self.degree_liberty(coord)
-                neigh_points = self.find_neigh_points(coord)
+            if self.turn:
+                self.board[coord[0]][coord[1]] = BlackStone(liberty)
+            else:
+                self.board[coord[0]][coord[1]] = WhiteStone(liberty)
+            self.change_liberty(coord, '-')
+            neigh_points = self.find_neigh_points(coord)
+            if liberty > 0:
+                turn = True
                 for point in neigh_points:
-                    if type(self.board[point[0]][point[1]]) != type(self.board[coord[0]][coord[1]]):
+                    if type(self.board[point[0]][point[1]]) != type(self.board[coord[0]][coord[1]]) and self.board[point[0]][point[1]]:
                         self.temp = []
                         if not self.stone_is_alive(point):
                             for elem in self.temp:
                                 self.board[elem[0]][elem[1]] = None
-                self.list_of_turns.append(coord)
-                self.turn = not self.turn
+                                self.change_liberty(elem, '+')
+            else:
+                turn = False
+                for point in neigh_points:
+                    if type(self.board[point[0]][point[1]]) == type(self.board[coord[0]][coord[1]]):
+                        self.temp = []
+                        if self.stone_is_alive(point):
+                            turn = True
+                    elif type(self.board[point[0]][point[1]]) != type(self.board[coord[0]][coord[1]]) and self.board[point[0]][point[1]]:
+                        self.temp = []
+                        if not self.stone_is_alive(point):
+                            for elem in self.temp:
+                                turn = True
+                                self.board[elem[0]][elem[1]] = None
+                                self.change_liberty(elem, '+')
+            if turn:
+                if not self.rool_co():
+                    self.list_of_turns.append(coord)
+                    self.turn = not self.turn
+                    self.temp_for_rool_co[0], self.temp_for_rool_co[1] = (
+                        self.temp_for_rool_co[1], self.temp_for_rool_co[0])
+                    self.temp_for_rool_co[1] = copy.deepcopy(self.board)
+                else:
+                    self.board = copy.deepcopy(self.temp_for_rool_co[1])
+            else:
+                self.board[coord[0]][coord[1]] = None
+                self.change_liberty(coord, '+')
+
+    def rool_co(self):
+        if len(self.temp_for_rool_co) > 1:
+            if self.board_are_equil():
+                self.board = copy.deepcopy(self.temp_for_rool_co[0])
+                return True
+        return False
+
+    def board_are_equil(self):
+        for i in range(len(self.board)):
+            for j in range(len(self.board[i])):
+                if type(self.board[i][j]) != type(self.temp_for_rool_co[0][i][j]):
+                    return False
+        return True
+
 
     def stone_is_alive(self, coord):
-        if self.count_liberty(coord)[1] == 0:
+        if self.count_liberty(coord) == 0:
             self.temp.append(coord)
             neigh_points = self.find_neigh_points(coord)
             for point in neigh_points:
@@ -69,32 +124,23 @@ class Board:
         return None
 
     def count_liberty(self, coord):
-        our_side = BlackStone
-        enemy_side = WhiteStone
-        if not self.turn:
-            our_side, enemy_side = enemy_side, our_side
         neigh_points = self.find_neigh_points(coord)
         i = 0
         while i < len(neigh_points):
-            if type(self.board[neigh_points[i][0]][neigh_points[i][1]]) is enemy_side:
+            if self.board[neigh_points[i][0]][neigh_points[i][1]]:
                 neigh_points.pop(i)
             else:
                 i += 1
-        positive_liberty = len(neigh_points)
-        i = 0
-        while i < len(neigh_points):
-            if type(self.board[neigh_points[i][0]][neigh_points[i][1]]) is our_side:
-                neigh_points.pop(i)
-            else:
-                i += 1
-        free_liberty = len(neigh_points)
-        return positive_liberty, free_liberty
+        return len(neigh_points)
 
-    def degree_liberty(self, coord):
+    def change_liberty(self, coord, sign):
         neigh_points = self.find_neigh_points(coord)
         for point in neigh_points:
             if self.board[point[0]][point[1]]:
-                self.board[point[0]][point[1]].liberty -= 1
+                if sign == '-':
+                    self.board[point[0]][point[1]].liberty -= 1
+                else:
+                    self.board[point[0]][point[1]].liberty += 1
 
     @staticmethod
     def find_neigh_points(coord):
@@ -121,17 +167,9 @@ class BlackStone(Stone):
 
     def __init__(self, liberty):
         Stone.__init__(self, liberty)
-        image = pygame.image.load(os.path.join('images/black.png'))
-        self.image = pygame.transform.scale(image,
-                                            (image.get_width() // 4,
-                                             image.get_height() // 4))
 
 
 class WhiteStone(Stone):
 
     def __init__(self, liberty):
         Stone.__init__(self, liberty)
-        image = pygame.image.load(os.path.join('images/white.png'))
-        self.image = pygame.transform.scale(image,
-                                            (image.get_width() // 4,
-                                             image.get_height() // 4))
