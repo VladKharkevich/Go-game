@@ -16,31 +16,33 @@ class Board:
                                  [[None for i in range(size)] for j in range(size)]]
         self.turn = True
         self.list_of_turns = []
+        self.dist_between_lines = 450 // (self.size - 1)
         image_w = pygame.image.load(os.path.join('images/white.png'))
         self.image_w = pygame.transform.scale(image_w,
-                                              (image_w.get_width() // 4,
-                                               image_w.get_height() // 4))
+                                              ((image_w.get_width() * self.dist_between_lines) // 100,
+                                              (image_w.get_height() * self.dist_between_lines) // 100))
         image_b = pygame.image.load(os.path.join('images/black.png'))
         self.image_b = pygame.transform.scale(image_b,
-                                              (image_b.get_width() // 4,
-                                               image_b.get_height() // 4))
+                                              ((image_b.get_width() * self.dist_between_lines) // 100,
+                                              (image_b.get_height() * self.dist_between_lines) // 100))
+
 
     def draw(self, surface):
         pygame.draw.rect(surface, color['brown'],
-                         (150, 80, 30 + 18 * 25, 30 + 18 * 25))
+                         (150, 80, 480, 480))
         for i in range(self.size):
             pygame.draw.line(surface, color['black'],
-                             (165 + 25 * i, 95), (165 + 25 * i, 545), 3)
+                             (165 + self.dist_between_lines * i, 95), (165 + self.dist_between_lines * i, 545), 3)
             pygame.draw.line(surface, color['black'],
-                             (165, 95 + 25 * i), (615, 95 + 25 * i), 3)
+                             (165, 95 + self.dist_between_lines * i), (615, 95 + self.dist_between_lines * i), 3)
         for i in range(self.size):
             for j in range(self.size):
                 if type(self.board[i][j]) == BlackStone:
                     surface.blit(self.image_b,
-                                 (152 + 25 * i, 82 + 25 * j))
+                                 (165 - (self.dist_between_lines // 2) + self.dist_between_lines * i, 95 - (self.dist_between_lines // 2) + self.dist_between_lines * j))
                 elif type(self.board[i][j]) == WhiteStone:
                     surface.blit(self.image_w,
-                                 (152 + 25 * i, 82 + 25 * j))
+                                 (165 - (self.dist_between_lines // 2) + self.dist_between_lines * i, 95 - (self.dist_between_lines // 2) + self.dist_between_lines * j))
 
     def make_step(self):
         pos = pygame.mouse.get_pos()
@@ -103,7 +105,6 @@ class Board:
                     return False
         return True
 
-
     def stone_is_alive(self, coord):
         if self.count_liberty(coord) == 0:
             self.temp.append(coord)
@@ -116,11 +117,14 @@ class Board:
             return True
 
     def find_coordinates(self, pos):
-        if (pos[0] in range(160, 621)) and (pos[1] in range(90, 551)) and (
-                pos[0] % 25 > 10 or pos[0] % 25 < 20) and (pos[1] % 25 > 15):
-            coord = [(pos[0] - 160) // 25, (pos[1] - 90) // 25]
-            if not self.board[coord[0]][coord[1]]:
-                return coord
+        pos = [pos[0] - 165, pos[1] - 95] 
+        if (pos[0] % self.dist_between_lines < self.dist_between_lines * 0.3 or pos[0] % self.dist_between_lines > self.dist_between_lines * 0.7) and (
+            pos[0] % self.dist_between_lines < self.dist_between_lines * 0.3 or pos[0] % self.dist_between_lines > self.dist_between_lines * 0.7):
+            coord = [(pos[0] + self.dist_between_lines // 2) // self.dist_between_lines,
+                     (pos[1] + self.dist_between_lines // 2) // self.dist_between_lines]
+            if 0 <= coord[0] <= self.size - 1 and 0 <= coord[0] <= self.size - 1:
+                if not self.board[coord[0]][coord[1]]:
+                    return coord
         return None
 
     def count_liberty(self, coord):
@@ -142,15 +146,14 @@ class Board:
                 else:
                     self.board[point[0]][point[1]].liberty += 1
 
-    @staticmethod
-    def find_neigh_points(coord):
+    def find_neigh_points(self, coord):
         neigh_points = [(coord[0], coord[1] - 1),
                         (coord[0] - 1, coord[1]),
                         (coord[0], coord[1] + 1),
                         (coord[0] + 1, coord[1])]
         i = 0
         while i < len(neigh_points):
-            if 0 <= neigh_points[i][0] <= 18 and 0 <= neigh_points[i][1] <= 18:
+            if 0 <= neigh_points[i][0] <= self.size - 1 and 0 <= neigh_points[i][1] <= self.size - 1:
                 i += 1
             else:
                 neigh_points.pop(i)

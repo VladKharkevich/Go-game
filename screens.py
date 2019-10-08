@@ -10,9 +10,9 @@ clock = pygame.time.Clock()
 
 class Game:
 
-    def __init__(self, display):
+    def __init__(self, display, size_of_board):
         self.display = display
-        self.go_board = Board(19)
+        self.go_board = Board(size_of_board)
         self.btn_pass = Button('pass', [150, 70], [700, 300])
         self.play = True
 
@@ -52,7 +52,7 @@ class Game:
                     surface, 'Game over. Do you want back to see replay?')
                 notification.run()
                 if notification.action:
-                    replay = Replay(surface, self.go_board.list_of_turns)
+                    replay = Replay(surface, self.go_board.list_of_turns, self.go_board.size)
                     replay.run()
                     del replay
                 del notification
@@ -87,9 +87,9 @@ class MainMenu():
         self.btn_settings.draw(self.display)
         self.btn_exit.draw(self.display)
         if self.btn_start.active:
-            game = Game(self.display)
-            game.run()
-            del game
+            choose_size_of_board = ChooseSizeOfBoard(self.display)
+            choose_size_of_board.run()
+            del choose_size_of_board
             self.btn_start.active = False
         elif self.btn_settings.active:
             settings = Settings(self.display)
@@ -147,12 +147,12 @@ class Settings:
 
 class Replay:
 
-    def __init__(self, display, list_of_turns):
+    def __init__(self, display, list_of_turns, size):
         self.list_of_turns = list_of_turns
         self.current_step = 0
         self.display = display
         self.show = True
-        self.go_board = Board(19)
+        self.go_board = Board(size)
         self.btn_prev = Button('prev', [150, 70], [700, 300])
         self.btn_next = Button('next', [150, 70], [700, 400])
 
@@ -203,8 +203,52 @@ class Replay:
             clock.tick(FPS)
 
 
+class ChooseSizeOfBoard:
+
+    def __init__(self, display):
+        self.display = display
+        sizes = [5, 6, 7, 8, 9, 11, 13, 15, 19]
+        self.btn_sizes = []
+        for i in range(len(sizes)):
+            self.btn_sizes.append(Button('%dx%d' % (sizes[i], sizes[i]), [120, 120],[
+                                  150 * (i % 3) + 200, 150 * (i // 3) + 100]))
+        self.show = True
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit(self.display)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    notification = Notification(
+                        self.display, 'Do you really want back to main menu?')
+                    notification.run()
+                    if notification.action:
+                        self.play = False
+                    del notification
+        self.display.fill(color['white'])
+        for btn_size in self.btn_sizes:
+            btn_size.draw(self.display)
+            if btn_size.active:
+                btn_size.active = False
+                game = Game(self.display, int(btn_size.name.split('x')[0]))
+                game.run()
+                self.show = False
+                del game
+        font = pygame.font.Font(None, 72)
+        text = font.render("Size of board", 1, color['green'])
+        lbturn = text.get_rect(center=(400, 50))
+        self.display.blit(text, lbturn)
+
+    def run(self):
+        while self.show:
+            self.update_screen()
+            pygame.display.update()
+            clock.tick(FPS)
+
+
 def exit(display):
-    notification = Notification(display, 'Are you really want to exit?')
+    notification = Notification(display, 'Do you really want to exit?')
     notification.run()
     if notification.action:
         pygame.quit()
