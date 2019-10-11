@@ -20,12 +20,11 @@ class Board:
         image_w = pygame.image.load(os.path.join('images/white.png'))
         self.image_w = pygame.transform.scale(image_w,
                                               ((image_w.get_width() * self.dist_between_lines) // 100,
-                                              (image_w.get_height() * self.dist_between_lines) // 100))
+                                               (image_w.get_height() * self.dist_between_lines) // 100))
         image_b = pygame.image.load(os.path.join('images/black.png'))
         self.image_b = pygame.transform.scale(image_b,
                                               ((image_b.get_width() * self.dist_between_lines) // 100,
-                                              (image_b.get_height() * self.dist_between_lines) // 100))
-
+                                               (image_b.get_height() * self.dist_between_lines) // 100))
 
     def draw(self, surface):
         pygame.draw.rect(surface, color['brown'],
@@ -117,9 +116,9 @@ class Board:
             return True
 
     def find_coordinates(self, pos):
-        pos = [pos[0] - 165, pos[1] - 95] 
+        pos = [pos[0] - 165, pos[1] - 95]
         if (pos[0] % self.dist_between_lines < self.dist_between_lines * 0.3 or pos[0] % self.dist_between_lines > self.dist_between_lines * 0.7) and (
-            pos[0] % self.dist_between_lines < self.dist_between_lines * 0.3 or pos[0] % self.dist_between_lines > self.dist_between_lines * 0.7):
+                pos[0] % self.dist_between_lines < self.dist_between_lines * 0.3 or pos[0] % self.dist_between_lines > self.dist_between_lines * 0.7):
             coord = [(pos[0] + self.dist_between_lines // 2) // self.dist_between_lines,
                      (pos[1] + self.dist_between_lines // 2) // self.dist_between_lines]
             if 0 <= coord[0] <= self.size - 1 and 0 <= coord[0] <= self.size - 1:

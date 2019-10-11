@@ -2,6 +2,7 @@ import pygame
 from settings import color, FPS
 from game import *
 from widgets import Button, Notification, Toggle
+from math import sin, cos, pi
 
 
 pygame.init()
@@ -10,7 +11,8 @@ clock = pygame.time.Clock()
 
 class Game:
 
-    def __init__(self, display, size_of_board):
+    def __init__(self, display, size_of_board, mode):
+        self.mode = mode
         self.display = display
         self.go_board = Board(size_of_board)
         self.btn_pass = Button('pass', [150, 70], [700, 300])
@@ -52,7 +54,8 @@ class Game:
                     surface, 'Game over. Do you want back to see replay?')
                 notification.run()
                 if notification.action:
-                    replay = Replay(surface, self.go_board.list_of_turns, self.go_board.size)
+                    replay = Replay(
+                        surface, self.go_board.list_of_turns, self.go_board.size)
                     replay.run()
                     del replay
                 del notification
@@ -87,7 +90,7 @@ class MainMenu():
         self.btn_settings.draw(self.display)
         self.btn_exit.draw(self.display)
         if self.btn_start.active:
-            choose_size_of_board = ChooseSizeOfBoard(self.display)
+            choose_size_of_board = ChooseGameMode(self.display)
             choose_size_of_board.run()
             del choose_size_of_board
             self.btn_start.active = False
@@ -205,12 +208,13 @@ class Replay:
 
 class ChooseSizeOfBoard:
 
-    def __init__(self, display):
+    def __init__(self, display, mode):
+        self.mode = mode
         self.display = display
         sizes = [5, 6, 7, 8, 9, 11, 13, 15, 19]
         self.btn_sizes = []
         for i in range(len(sizes)):
-            self.btn_sizes.append(Button('%dx%d' % (sizes[i], sizes[i]), [120, 120],[
+            self.btn_sizes.append(Button('%dx%d' % (sizes[i], sizes[i]), [120, 120], [
                                   150 * (i % 3) + 200, 150 * (i // 3) + 100]))
         self.show = True
 
@@ -224,21 +228,124 @@ class ChooseSizeOfBoard:
                         self.display, 'Do you really want back to main menu?')
                     notification.run()
                     if notification.action:
-                        self.play = False
+                        self.show = False
                     del notification
         self.display.fill(color['white'])
+        font = pygame.font.Font(None, 72)
+        text = font.render("Size of board", 1, color['green'])
+        lb = text.get_rect(center=(400, 50))
+        self.display.blit(text, lb)
         for btn_size in self.btn_sizes:
             btn_size.draw(self.display)
             if btn_size.active:
                 btn_size.active = False
-                game = Game(self.display, int(btn_size.name.split('x')[0]))
-                game.run()
+                if self.mode == 'friend':
+                    game = Game(self.display, int(
+                        btn_size.name.split('x')[0]), self.mode)
+                    game.run()
+                    del game
+                elif self.mode == 'online':
+                    waiting = Waiting(self.display)
+                    waiting.run()
+                    del waiting
                 self.show = False
-                del game
+
+    def run(self):
+        while self.show:
+            self.update_screen()
+            pygame.display.update()
+            clock.tick(FPS)
+
+
+class ChooseGameMode:
+
+    def __init__(self, display):
+        self.display = display
+        self.btn_sizes = []
+        self.btn_play_with_friend = Button(
+            'play with friend', [400, 100], [250, 220])
+        self.btn_play_online = Button('play online', [400, 100], [250, 350])
+        self.show = True
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit(self.display)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    notification = Notification(
+                        self.display, 'Do you really want back to main menu?')
+                    notification.run()
+                    if notification.action:
+                        self.show = False
+                    del notification
+        self.display.fill(color['white'])
         font = pygame.font.Font(None, 72)
-        text = font.render("Size of board", 1, color['green'])
-        lbturn = text.get_rect(center=(400, 50))
-        self.display.blit(text, lbturn)
+        text = font.render("Choose game mode", 1, color['green'])
+        lb = text.get_rect(center=(450, 50))
+        self.display.blit(text, lb)
+        self.btn_play_with_friend.draw(self.display)
+        self.btn_play_online.draw(self.display)
+        if self.btn_play_with_friend.active:
+            self.btn_play_with_friend.active = False
+            choose_size_of_board = ChooseSizeOfBoard(self.display, 'friend')
+            choose_size_of_board.run()
+            self.show = False
+            del choose_size_of_board
+        elif self.btn_play_online.active:
+            self.btn_play_online.active = False
+            choose_size_of_board = ChooseSizeOfBoard(self.display, 'online')
+            choose_size_of_board.run()
+            self.show = False
+            del choose_size_of_board
+
+    def run(self):
+        while self.show:
+            self.update_screen()
+            pygame.display.update()
+            clock.tick(FPS)
+
+
+class Waiting:
+
+    def __init__(self, display):
+        self.display = display
+        self.show = True
+        self.head = 0
+        self.temp = 0
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit(self.display)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    notification = Notification(
+                        self.display, 'Do you really want back to main menu?')
+                    notification.run()
+                    if notification.action:
+                        self.show = False
+                    del notification
+        self.display.fill(color['white'])
+        font = pygame.font.Font(None, 72)
+        text = font.render("Waiting", 1, color['green'])
+        lb = text.get_rect(center=(450, 50))
+        self.display.blit(text, lb)
+        for angle in range(12):
+            if angle == self.head:
+                now_color = color['black']
+            elif angle == (self.head + 1) % 12:
+                now_color = color['dark-gray']
+            elif angle == (self.head + 2) % 12:
+                now_color = color['gray']
+            else:
+                now_color = color['light-gray']
+            pygame.draw.line(self.display, now_color, (450 + 15 * sin(angle * pi / 6), 300 + 15 * cos(
+                angle * pi / 6)), (450 + 30 * sin(angle * pi / 6), 300 + 30 * cos(angle * pi / 6)), 2)
+        self.temp += 1
+        if self.temp == 5:
+            self.temp = 0
+            self.head = (self.head - 1) % 12
 
     def run(self):
         while self.show:
