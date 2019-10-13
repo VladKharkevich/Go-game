@@ -43,9 +43,10 @@ class Board:
                     surface.blit(self.image_w,
                                  (165 - (self.dist_between_lines // 2) + self.dist_between_lines * i, 95 - (self.dist_between_lines // 2) + self.dist_between_lines * j))
 
-    def make_step(self):
-        pos = pygame.mouse.get_pos()
-        coord = self.find_coordinates(pos)
+    def make_step(self, coord=None):
+        if not coord:
+            pos = pygame.mouse.get_pos()
+            coord = self.find_coordinates(pos)
         if coord:
             liberty = self.count_liberty(coord)
             if self.turn:

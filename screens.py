@@ -3,35 +3,66 @@ from settings import color, FPS
 from game import *
 from widgets import Button, Notification, Toggle
 from math import sin, cos, pi
+from client import Client
+import pickle
 
 
 pygame.init()
 clock = pygame.time.Clock()
 
 
-class Game:
+class MainScreen:
 
-    def __init__(self, display, size_of_board, mode):
-        self.mode = mode
+    def __init__(self, display):
         self.display = display
-        self.go_board = Board(size_of_board)
-        self.btn_pass = Button('pass', [150, 70], [700, 300])
-        self.play = True
+        self.show = True
 
-    def update_screen(self):
+    def update_main_screen(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit(self.display)
-            elif event.type == pygame.MOUSEBUTTONUP:
-                self.go_board.make_step()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     notification = Notification(
                         self.display, 'Do you really want back to main menu?')
                     notification.run()
                     if notification.action:
-                        self.play = False
+                        self.show = False
                     del notification
+        self.display.fill(color['white'])
+        self.update_screen()
+
+    def update_screen(self):
+        pass
+
+    def run(self):
+        while self.show:
+            self.update_main_screen()
+            pygame.display.update()
+            clock.tick(FPS)
+
+
+class Game(MainScreen):
+
+    def __init__(self, display, size_of_board):
+        MainScreen.__init__(self, display)
+        self.go_board = Board(size_of_board)
+        self.btn_pass = Button('pass', [150, 70], [700, 300])
+
+    def update_screen(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit(self.display)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    notification = Notification(
+                        self.display, 'Do you really want back to main menu?')
+                    notification.run()
+                    if notification.action:
+                        self.show = False
+                    del notification
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.go_board.make_step()
         self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_pass.draw(self.display)
@@ -46,6 +77,9 @@ class Game:
         lbturn = text.get_rect(center=(400, 50))
         self.display.blit(text, lbturn)
 
+    def update_main_screen(self):
+        self.update_screen()
+
     def make_pass(self, surface):
         self.go_board.turn = not self.go_board.turn
         try:
@@ -58,6 +92,7 @@ class Game:
                         surface, self.go_board.list_of_turns, self.go_board.size)
                     replay.run()
                     del replay
+                    self.show = False
                 del notification
                 return False
             else:
@@ -66,14 +101,8 @@ class Game:
             self.go_board.list_of_turns.append(None)
         return True
 
-    def run(self):
-        while self.play:
-            self.update_screen()
-            pygame.display.update()
-            clock.tick(FPS)
 
-
-class MainMenu():
+class MainMenu:
 
     def __init__(self, display):
         self.display = display
@@ -110,23 +139,18 @@ class MainMenu():
             clock.tick(FPS)
 
 
-class Settings:
+class Settings(MainScreen):
 
     def __init__(self, display):
-        self.display = display
+        MainScreen.__init__(self, display)
         self.btn_about_program = Button('program', [170, 50], [375, 250], 40)
         self.btn_rools = Button('rools', [170, 50], [375, 320], 40)
         self.btn_main_menu = Button('main menu', [170, 50], [375, 390], 40)
         self.tgl_music = Toggle([250, 130])
         self.tgl_sound = Toggle([650, 130])
-        self.show = True
 
     def update_screen(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                exit(self.display)
         font = pygame.font.Font(None, 44)
-        self.display.fill(color['white'])
         self.btn_about_program.draw(self.display)
         self.btn_rools.draw(self.display)
         self.btn_main_menu.draw(self.display)
@@ -141,37 +165,18 @@ class Settings:
         if self.btn_main_menu.active:
             self.show = False
 
-    def run(self):
-        while self.show:
-            self.update_screen()
-            pygame.display.update()
-            clock.tick(FPS)
 
-
-class Replay:
+class Replay(MainScreen):
 
     def __init__(self, display, list_of_turns, size):
+        MainScreen.__init__(self, display)
         self.list_of_turns = list_of_turns
         self.current_step = 0
-        self.display = display
-        self.show = True
         self.go_board = Board(size)
         self.btn_prev = Button('prev', [150, 70], [700, 300])
         self.btn_next = Button('next', [150, 70], [700, 400])
 
     def update_screen(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                exit(self.display)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    notification = Notification(
-                        self.display, 'Do you really want back to main menu?')
-                    notification.run()
-                    if notification.action:
-                        self.show = False
-                    del notification
-        self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_prev.draw(self.display)
         self.btn_next.draw(self.display)
@@ -199,38 +204,20 @@ class Replay:
         if coord:
             self.go_board.board[coord[0]][coord[1]] = None
 
-    def run(self):
-        while self.show:
-            self.update_screen()
-            pygame.display.update()
-            clock.tick(FPS)
 
-
-class ChooseSizeOfBoard:
+class ChooseSizeOfBoard(MainScreen):
 
     def __init__(self, display, mode):
-        self.mode = mode
-        self.display = display
+        MainScreen.__init__(self, display)
         sizes = [5, 6, 7, 8, 9, 11, 13, 15, 19]
         self.btn_sizes = []
         for i in range(len(sizes)):
             self.btn_sizes.append(Button('%dx%d' % (sizes[i], sizes[i]), [120, 120], [
                                   150 * (i % 3) + 200, 150 * (i // 3) + 100]))
         self.show = True
+        self.mode = mode
 
     def update_screen(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                exit(self.display)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    notification = Notification(
-                        self.display, 'Do you really want back to main menu?')
-                    notification.run()
-                    if notification.action:
-                        self.show = False
-                    del notification
-        self.display.fill(color['white'])
         font = pygame.font.Font(None, 72)
         text = font.render("Size of board", 1, color['green'])
         lb = text.get_rect(center=(400, 50))
@@ -241,45 +228,27 @@ class ChooseSizeOfBoard:
                 btn_size.active = False
                 if self.mode == 'friend':
                     game = Game(self.display, int(
-                        btn_size.name.split('x')[0]), self.mode)
+                        btn_size.name.split('x')[0]), 'friend')
                     game.run()
                     del game
                 elif self.mode == 'online':
-                    waiting = Waiting(self.display)
+                    waiting = Waiting(self.display, int(
+                        btn_size.name.split('x')[0]))
                     waiting.run()
                     del waiting
                 self.show = False
 
-    def run(self):
-        while self.show:
-            self.update_screen()
-            pygame.display.update()
-            clock.tick(FPS)
 
-
-class ChooseGameMode:
+class ChooseGameMode(MainScreen):
 
     def __init__(self, display):
-        self.display = display
+        MainScreen.__init__(self, display)
         self.btn_sizes = []
         self.btn_play_with_friend = Button(
             'play with friend', [400, 100], [250, 220])
         self.btn_play_online = Button('play online', [400, 100], [250, 350])
-        self.show = True
 
     def update_screen(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                exit(self.display)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    notification = Notification(
-                        self.display, 'Do you really want back to main menu?')
-                    notification.run()
-                    if notification.action:
-                        self.show = False
-                    del notification
-        self.display.fill(color['white'])
         font = pygame.font.Font(None, 72)
         text = font.render("Choose game mode", 1, color['green'])
         lb = text.get_rect(center=(450, 50))
@@ -299,34 +268,17 @@ class ChooseGameMode:
             self.show = False
             del choose_size_of_board
 
-    def run(self):
-        while self.show:
-            self.update_screen()
-            pygame.display.update()
-            clock.tick(FPS)
 
+class Waiting(MainScreen):
 
-class Waiting:
-
-    def __init__(self, display):
-        self.display = display
-        self.show = True
+    def __init__(self, display, size):
+        MainScreen.__init__(self, display)
         self.head = 0
         self.temp = 0
+        self.size = size
+        self.client = Client()
 
     def update_screen(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                exit(self.display)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    notification = Notification(
-                        self.display, 'Do you really want back to main menu?')
-                    notification.run()
-                    if notification.action:
-                        self.show = False
-                    del notification
-        self.display.fill(color['white'])
         font = pygame.font.Font(None, 72)
         text = font.render("Waiting", 1, color['green'])
         lb = text.get_rect(center=(450, 50))
@@ -346,12 +298,90 @@ class Waiting:
         if self.temp == 5:
             self.temp = 0
             self.head = (self.head - 1) % 12
+        result, side = self.client.start_client()
+        if result:
+            game = OnlineGame(self.display, self.size, int(side), self.client)
+            game.run()
+            del game
+            self.show = False
 
-    def run(self):
-        while self.show:
-            self.update_screen()
+
+class OnlineGame(MainScreen):
+
+    def __init__(self, display, size_of_board, side, client):
+        MainScreen.__init__(self, display)
+        self.side = side
+        self.client = client
+        self.go_board = Board(size_of_board)
+        self.btn_pass = Button('pass', [150, 70], [700, 300])
+        self.draw_first_time = False
+
+    def update_screen(self):
+        if self.draw_first_time:
+            if self.side != self.go_board.turn:
+                data = self.client.sockobj.recv(1024)
+                data = pickle.loads(data)
+                self.go_board.make_step(data)
+        else:
+            self.draw_first_time = True
+        temp = len(self.go_board.list_of_turns)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit(self.display)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    notification = Notification(
+                        self.display, 'Do you really want back to main menu?')
+                    notification.run()
+                    if notification.action:
+                        self.show = False
+                    del notification
+            elif event.type == pygame.MOUSEBUTTONUP and self.side == self.go_board.turn:
+                print('click')
+                self.go_board.make_step()
+        self.display.fill(color['white'])
+        self.go_board.draw(self.display)
+        self.btn_pass.draw(self.display)
+        if self.btn_pass.active:
+            self.play = self.make_pass(self.display)
+            self.btn_pass.active = False
+        font = pygame.font.Font(None, 72)
+        if self.go_board.turn ^ self.side:
+            text = font.render("Their turn", 1, color['green'])
+        else:
+            text = font.render("Your turn", 1, color['green'])
+        lbturn = text.get_rect(center=(400, 50))
+        self.display.blit(text, lbturn)
+        if temp != len(self.go_board.list_of_turns):
+            self.client.sockobj.send(pickle.dumps(self.go_board.list_of_turns[-1]))
             pygame.display.update()
             clock.tick(FPS)
+
+    def update_main_screen(self):
+        self.update_screen()
+
+    def make_pass(self, surface):
+        self.go_board.turn = not self.go_board.turn
+        try:
+            if not self.go_board.list_of_turns[-1]:
+                notification = Notification(
+                    surface, 'Game over. Do you want back to see replay?')
+                notification.run()
+                if notification.action:
+                    replay = Replay(
+                        surface, self.go_board.list_of_turns, self.go_board.size)
+                    replay.run()
+                    del replay
+                    self.show = False
+                del notification
+                return False
+            else:
+                self.go_board.list_of_turns.append(None)
+                self.client.sockobj.send(pickle.dumps(None))
+        except IndexError:
+            self.go_board.list_of_turns.append(None)
+            self.client.sockobj.send(pickle.dumps(None))
+        return True
 
 
 def exit(display):
