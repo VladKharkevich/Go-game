@@ -170,6 +170,11 @@ class Settings(MainScreen):
             rools.run()
             del rools
             self.btn_rools.active = False
+        elif self.btn_about_program.active:
+            about_program = AboutProgram(self.display)
+            about_program.run()
+            del about_program
+            self.btn_about_program.active = False
 
 
 class Rools(MainScreen):
@@ -187,6 +192,38 @@ class Rools(MainScreen):
         self.display.blit(image, (20, 20))
         self.btn_main_menu.draw(self.display)
         self.slider.draw(self.display)
+        if self.btn_main_menu.active:
+            self.show = False
+
+
+class AboutProgram(MainScreen):
+    def __init__(self, display):
+        MainScreen.__init__(self, display)
+        self.btn_main_menu = Button('main menu', [170, 50], [375, 480], 40)
+
+    def update_screen(self):
+        font = pygame.font.Font(None, 52)
+        mdl_font = pygame.font.Font(None, 40)
+        sm_font = pygame.font.SysFont('arial', 25)
+        text = font.render("About Program", 1, color['green'])
+        lb = text.get_rect(center=(450, 50))
+        self.display.blit(text, lb)
+        text = mdl_font.render("Go", 1, color['black'])
+        lb = text.get_rect(center=(450, 150))
+        self.display.blit(text, lb)
+        text = sm_font.render("0.1.0", 1, color['black'])
+        lb = text.get_rect(center=(450, 200))
+        self.display.blit(text, lb)
+        text = sm_font.render("popular Japanese game", 1, color['black'])
+        lb = text.get_rect(center=(450, 250))
+        self.display.blit(text, lb)
+        text = sm_font.render("Developer: Vladislav Kharkevich", 1, color['black'])
+        lb = text.get_rect(center=(450, 320))
+        self.display.blit(text, lb)
+        text = sm_font.render("Copyright © 2019 Vladislav Kharkevich", 1, color['black'])
+        lb = text.get_rect(center=(450, 370))
+        self.display.blit(text, lb)
+        self.btn_main_menu.draw(self.display)
         if self.btn_main_menu.active:
             self.show = False
 
@@ -245,7 +282,7 @@ class ChooseSizeOfBoard(MainScreen):
     def update_screen(self):
         font = pygame.font.Font(None, 72)
         text = font.render("Size of board", 1, color['green'])
-        lb = text.get_rect(center=(400, 50))
+        lb = text.get_rect(center=(450, 50))
         self.display.blit(text, lb)
         for btn_size in self.btn_sizes:
             btn_size.draw(self.display)
