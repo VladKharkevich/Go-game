@@ -173,3 +173,38 @@ class MessageBox:
             self.draw()
             pygame.display.update()
             clock.tick(FPS)
+
+
+class Slider:
+
+    def __init__(self):
+        self.pos_rect_y = 15
+        self.value = 0
+        self.btn_active = False 
+        self.is_draw = False
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, color['gray'], (830, 40, 20, 500))
+        if pygame.mouse.get_pressed()[0]:
+            if (830 <= pygame.mouse.get_pos()[0] <= 850) and (
+                40 <= pygame.mouse.get_pos()[1] <= 540):
+                pygame.draw.rect(surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
+                self.pos_rect_y = pygame.mouse.get_pos()[1] - 25
+                self.value = round((self.pos_rect_y - 15) / 5)
+                self.is_draw = True
+            elif (825 <= pygame.mouse.get_pos()[0] <= 855) and (
+                self.pos_rect_y <= pygame.mouse.get_pos()[1] <= self.pos_rect_y + 50):
+                pygame.draw.rect(surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
+                self.btn_active = True
+                self.value = round((self.pos_rect_y - 15) / 5)
+                self.is_draw = True
+            elif self.btn_active:
+                pygame.draw.rect(surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
+                self.is_draw = True
+                if (40 <= pygame.mouse.get_pos()[1] <= 540):
+                    self.pos_rect_y = pygame.mouse.get_pos()[1] - 25
+                    self.value = round((self.pos_rect_y - 15) / 5)
+        if not self.is_draw:
+            pygame.draw.rect(surface, color['green'], (825, self.pos_rect_y, 30, 50))
+            self.btn_active = False
+        self.is_draw = False

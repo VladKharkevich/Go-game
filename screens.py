@@ -165,6 +165,30 @@ class Settings(MainScreen):
         self.display.blit(text_sound, lbsound)
         if self.btn_main_menu.active:
             self.show = False
+        elif self.btn_rools.active:
+            rools = Rools(self.display)
+            rools.run()
+            del rools
+            self.btn_rools.active = False
+
+
+class Rools(MainScreen):
+
+    def __init__(self, display):
+        MainScreen.__init__(self, display)
+        self.btn_main_menu = Button('main menu', [170, 50], [375, 530], 40)
+        self.slider = Slider()
+        image_rool = pygame.image.load(os.path.join('images/rools.png'))
+        self.image_rool = pygame.transform.scale(image_rool, (800, image_rool.get_height() * 800 // image_rool.get_width()))
+
+    def update_screen(self):
+        image = pygame.transform.chop(self.image_rool, (0, 0, 0, (self.slider.value / 100) * (self.image_rool.get_height() - 500)))
+        image = pygame.transform.chop(image, (0, 500, 0, image.get_height() - 500))
+        self.display.blit(image, (20, 20))
+        self.btn_main_menu.draw(self.display)
+        self.slider.draw(self.display)
+        if self.btn_main_menu.active:
+            self.show = False
 
 
 class Replay(MainScreen):
