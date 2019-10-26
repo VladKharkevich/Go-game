@@ -1,10 +1,11 @@
 import pygame
 from settings import color, FPS
 from game import *
-from widgets import Button, Notification, Toggle
+from widgets import *
 from math import sin, cos, pi
 from client import Client
 import pickle
+import threading
 
 
 pygame.init()
@@ -228,7 +229,7 @@ class ChooseSizeOfBoard(MainScreen):
                 btn_size.active = False
                 if self.mode == 'friend':
                     game = Game(self.display, int(
-                        btn_size.name.split('x')[0]), 'friend')
+                        btn_size.name.split('x')[0]))
                     game.run()
                     del game
                 elif self.mode == 'online':
@@ -277,6 +278,8 @@ class Waiting(MainScreen):
         self.temp = 0
         self.size = size
         self.client = Client()
+        self.result = None
+        self.side = None
 
     def update_screen(self):
         font = pygame.font.Font(None, 72)
@@ -298,12 +301,30 @@ class Waiting(MainScreen):
         if self.temp == 5:
             self.temp = 0
             self.head = (self.head - 1) % 12
-        result, side = self.client.start_client()
-        if result:
-            game = OnlineGame(self.display, self.size, int(side), self.client)
+        
+        if self.result:
+            game = OnlineGame(self.display, self.size, int(self.side), self.client)
             game.run()
             del game
             self.show = False
+
+    def run_screen(self):
+        while self.show:
+            self.update_main_screen()
+            pygame.display.update()
+            clock.tick(FPS)
+
+    def run_client(self):
+        while not self.result:
+            self.result, self.side = self.client.start_client()
+
+    def run(self):
+        thr_screen = threading.Thread(target=self.run_screen)
+        thr_client = threading.Thread(target=self.run_client, daemon=True)
+        thr_screen.start()
+        thr_client.start()
+        thr_screen.join()
+        thr_client.join()
 
 
 class OnlineGame(MainScreen):
@@ -314,17 +335,15 @@ class OnlineGame(MainScreen):
         self.client = client
         self.go_board = Board(size_of_board)
         self.btn_pass = Button('pass', [150, 70], [700, 300])
-        self.draw_first_time = False
+        self.show_err_msg = False
 
     def update_screen(self):
-        if self.draw_first_time:
-            if self.side != self.go_board.turn:
-                data = self.client.sockobj.recv(1024)
-                data = pickle.loads(data)
-                self.go_board.make_step(data)
-        else:
-            self.draw_first_time = True
-        temp = len(self.go_board.list_of_turns)
+        if self.show_err_msg:
+            message_box = MessageBox(
+                self.display, 'Lost connection to server')
+            message_box.run()
+            del message_box
+            self.show = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit(self.display)
@@ -337,8 +356,10 @@ class OnlineGame(MainScreen):
                         self.show = False
                     del notification
             elif event.type == pygame.MOUSEBUTTONUP and self.side == self.go_board.turn:
-                print('click')
+                temp = len(self.go_board.list_of_turns)
                 self.go_board.make_step()
+                if temp != len(self.go_board.list_of_turns):
+                    self.client.sockobj.send(pickle.dumps(self.go_board.list_of_turns[-1]))
         self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_pass.draw(self.display)
@@ -352,13 +373,31 @@ class OnlineGame(MainScreen):
             text = font.render("Your turn", 1, color['green'])
         lbturn = text.get_rect(center=(400, 50))
         self.display.blit(text, lbturn)
-        if temp != len(self.go_board.list_of_turns):
-            self.client.sockobj.send(pickle.dumps(self.go_board.list_of_turns[-1]))
+        
+
+    def run_screen(self):
+        while self.show:
+            self.update_screen()
             pygame.display.update()
             clock.tick(FPS)
 
-    def update_main_screen(self):
-        self.update_screen()
+    def run_client(self):
+        try:
+            while True:
+                if self.side != self.go_board.turn:
+                    data = self.client.sockobj.recv(1024)
+                    data = pickle.loads(data)
+                    self.go_board.make_step(data)
+        except EOFError:
+            self.show_err_msg = True
+
+    def run(self):
+        thr_screen = threading.Thread(target=self.run_screen)
+        thr_client = threading.Thread(target=self.run_client, daemon=True)
+        thr_screen.start()
+        thr_client.start()
+        thr_screen.join()
+        thr_client.join()
 
     def make_pass(self, surface):
         self.go_board.turn = not self.go_board.turn

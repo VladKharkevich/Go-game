@@ -143,3 +143,33 @@ class Toggle:
             2))**2 <= (self.size[1] / 2)**2):
             return True
         return False
+
+
+class MessageBox:
+
+    def __init__(self, surface, text):
+        self.surface = surface
+        self.text = text
+        self.btn_ok = Button('OK', [140, 50], [380, 300])
+        self.show = True
+
+    def draw(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        pygame.draw.rect(self.surface, color['green'],
+                         (120, 150, 660, 300))
+        font = pygame.font.Font(None, 50)
+        text = font.render(self.text, 1, color['white'])
+        lb = text.get_rect(center=(display_size[0] / 2, 200))
+        self.surface.blit(text, lb)
+        self.btn_ok.draw(self.surface)
+        if self.btn_ok.active:
+            self.show = False
+
+    def run(self):
+        while self.show:
+            self.draw()
+            pygame.display.update()
+            clock.tick(FPS)

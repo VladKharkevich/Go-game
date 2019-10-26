@@ -49,12 +49,11 @@ class Server:
                         sock.send(b'Start' + str(side).encode())
                         side ^= 1
                         game = True
-                    else:
-                        sock.send(b'No')
         queue = [player_1, player_2]
         while True:
             print(queue[0])
             data = queue[0].recv(1024)
+            print(data)
             queue[1].send(data)
             temp = queue.pop(0)
             queue.append(temp)
