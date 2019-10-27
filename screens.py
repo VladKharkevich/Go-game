@@ -235,6 +235,7 @@ class Replay(MainScreen):
         self.list_of_turns = list_of_turns
         self.current_step = 0
         self.go_board = Board(size)
+        self.size = size
         self.btn_prev = Button('prev', [150, 70], [700, 300])
         self.btn_next = Button('next', [150, 70], [700, 400])
 
@@ -253,18 +254,15 @@ class Replay(MainScreen):
 
     def make_step_forward(self):
         coord = self.list_of_turns[self.current_step]
-        if coord:
-            if self.current_step % 2 == 0:
-                self.go_board.board[coord[0]][coord[1]] = BlackStone(0)
-            else:
-                self.go_board.board[coord[0]][coord[1]] = WhiteStone(0)
+        self.go_board.make_step(coord)
         self.current_step += 1
 
     def make_step_back(self):
         self.current_step -= 1
-        coord = self.list_of_turns[self.current_step]
-        if coord:
-            self.go_board.board[coord[0]][coord[1]] = None
+        self.go_board.__init__(self.size)
+        for step in range(self.current_step):
+            coord = self.list_of_turns[step]
+            self.go_board.make_step(coord)
 
 
 class ChooseSizeOfBoard(MainScreen):
