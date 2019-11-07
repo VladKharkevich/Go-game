@@ -10,7 +10,14 @@ class Client:
         if len(sys.argv) > 1:
             self.serverHost = sys.argv[1]
         self.sockobj = socket(AF_INET, SOCK_STREAM)
-        self.sockobj.connect((self.serverHost, self.serverPort))
+        self.access = False
+        while not self.access:
+            try:
+                self.sockobj.connect((self.serverHost, self.serverPort))
+                self.access = True
+            except:
+                pass
+
 
     def start_client(self):
         data = self.sockobj.recv(1024)

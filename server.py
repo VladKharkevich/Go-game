@@ -35,7 +35,6 @@ class Server:
             for sock in self.to_monitor:
                 if sock is not self.server_socket:
                     if len(self.to_monitor) == 3:
-                        print(self.to_monitor)
                         if side:
                             if 'player_1' in locals():
                                 player_2 = sock
@@ -51,9 +50,7 @@ class Server:
                         game = True
         queue = [player_1, player_2]
         while True:
-            print(queue[0])
             data = queue[0].recv(1024)
-            print(data)
             queue[1].send(data)
             temp = queue.pop(0)
             queue.append(temp)

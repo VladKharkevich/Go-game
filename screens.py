@@ -85,6 +85,7 @@ class Game(MainScreen):
         self.go_board.turn = not self.go_board.turn
         try:
             if not self.go_board.list_of_turns[-1]:
+                winner = self.board.find_winner()
                 notification = Notification(
                     surface, 'Game over. Do you want back to see replay?')
                 notification.run()
@@ -197,6 +198,7 @@ class Rools(MainScreen):
 
 
 class AboutProgram(MainScreen):
+
     def __init__(self, display):
         MainScreen.__init__(self, display)
         self.btn_main_menu = Button('main menu', [170, 50], [375, 480], 40)
@@ -336,7 +338,6 @@ class Waiting(MainScreen):
         self.head = 0
         self.temp = 0
         self.size = size
-        self.client = Client()
         self.result = None
         self.side = None
 
@@ -374,16 +375,16 @@ class Waiting(MainScreen):
             clock.tick(FPS)
 
     def run_client(self):
+        self.client = Client()
         while not self.result:
             self.result, self.side = self.client.start_client()
 
     def run(self):
         thr_screen = threading.Thread(target=self.run_screen)
         thr_client = threading.Thread(target=self.run_client, daemon=True)
-        thr_screen.start()
         thr_client.start()
+        thr_screen.start()
         thr_screen.join()
-        thr_client.join()
 
 
 class OnlineGame(MainScreen):
@@ -395,6 +396,7 @@ class OnlineGame(MainScreen):
         self.go_board = Board(size_of_board)
         self.btn_pass = Button('pass', [150, 70], [700, 300])
         self.show_err_msg = False
+        self.request_for_pass = False
 
     def update_screen(self):
         if self.show_err_msg:
@@ -422,9 +424,10 @@ class OnlineGame(MainScreen):
         self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_pass.draw(self.display)
-        if self.btn_pass.active:
+        if self.btn_pass.active or self.request_for_pass:
             self.play = self.make_pass(self.display)
             self.btn_pass.active = False
+            self.request_for_pass = False
         font = pygame.font.Font(None, 72)
         if self.go_board.turn ^ self.side:
             text = font.render("Their turn", 1, color['green'])
@@ -446,7 +449,10 @@ class OnlineGame(MainScreen):
                 if self.side != self.go_board.turn:
                     data = self.client.sockobj.recv(1024)
                     data = pickle.loads(data)
-                    self.go_board.make_step(data)
+                    if data:
+                        self.go_board.make_step(data)
+                    else:
+                        self.request_for_pass = True
         except EOFError:
             self.show_err_msg = True
 
@@ -456,30 +462,33 @@ class OnlineGame(MainScreen):
         thr_screen.start()
         thr_client.start()
         thr_screen.join()
-        thr_client.join()
 
     def make_pass(self, surface):
-        self.go_board.turn = not self.go_board.turn
-        try:
-            if not self.go_board.list_of_turns[-1]:
-                notification = Notification(
-                    surface, 'Game over. Do you want back to see replay?')
-                notification.run()
-                if notification.action:
-                    replay = Replay(
-                        surface, self.go_board.list_of_turns, self.go_board.size)
-                    replay.run()
-                    del replay
-                    self.show = False
-                del notification
-                return False
-            else:
+        if self.side == self.go_board.turn or self.request_for_pass:
+            self.go_board.turn = not self.go_board.turn
+            try:
+                if not self.go_board.list_of_turns[-1]:
+                    self.client.sockobj.send(pickle.dumps(None))
+                    notification = Notification(
+                        surface, 'Game over. Do you want back to see replay?')
+                    notification.run()
+                    if notification.action:
+                        replay = Replay(
+                            surface, self.go_board.list_of_turns, self.go_board.size)
+                        replay.run()
+                        del replay
+                        self.show = False
+                    del notification
+                    return False
+                else:
+                    self.go_board.list_of_turns.append(None)
+                    if not self.request_for_pass:
+                        self.client.sockobj.send(pickle.dumps(None))
+            except IndexError:
                 self.go_board.list_of_turns.append(None)
-                self.client.sockobj.send(pickle.dumps(None))
-        except IndexError:
-            self.go_board.list_of_turns.append(None)
-            self.client.sockobj.send(pickle.dumps(None))
-        return True
+                if not self.request_for_pass:
+                    self.client.sockobj.send(pickle.dumps(None))
+            return True
 
 
 def exit(display):

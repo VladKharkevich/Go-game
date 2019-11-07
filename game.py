@@ -159,6 +159,9 @@ class Board:
                 neigh_points.pop(i)
         return neigh_points
 
+    def find_winner(self):
+        pass
+
 
 class Stone:
 
