@@ -49,6 +49,7 @@ class Game(MainScreen):
         MainScreen.__init__(self, display)
         self.go_board = Board(size_of_board)
         self.btn_pass = Button('pass', [150, 70], [700, 300])
+        self.btn_resign = Button('resign', [150, 70], [700, 425])
 
     def update_screen(self):
         for event in pygame.event.get():
@@ -67,9 +68,22 @@ class Game(MainScreen):
         self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_pass.draw(self.display)
+        self.btn_resign.draw(self.display)
         if self.btn_pass.active:
             self.play = self.make_pass(self.display)
             self.btn_pass.active = False
+        if self.btn_resign.active:
+            self.go_board.list_of_turns.append(None)
+            notification = Notification(
+                self.display, 'Game over. Do you want back to see replay?')
+            notification.run()
+            if notification.action:
+                replay = Replay(
+                    self.display, self.go_board.list_of_turns, self.go_board.size)
+                replay.run()
+                del replay
+                self.show = False
+            del notification
         font = pygame.font.Font(None, 72)
         if self.go_board.turn:
             text = font.render("Black's turn", 1, color['green'])
@@ -395,6 +409,7 @@ class OnlineGame(MainScreen):
         self.client = client
         self.go_board = Board(size_of_board)
         self.btn_pass = Button('pass', [150, 70], [700, 300])
+        self.btn_resign = Button('resign', [150, 70], [700, 425])
         self.show_err_msg = False
         self.request_for_pass = False
 
@@ -424,10 +439,24 @@ class OnlineGame(MainScreen):
         self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_pass.draw(self.display)
+        self.btn_resign.draw(self.display)
         if self.btn_pass.active or self.request_for_pass:
             self.play = self.make_pass(self.display)
             self.btn_pass.active = False
             self.request_for_pass = False
+        if self.btn_resign.active:
+            self.go_board.list_of_turns.append(None)
+            self.client.sockobj.send(pickle.dumps(-1))
+            notification = Notification(
+                self.display, 'Game over. Do you want back to see replay?')
+            notification.run()
+            if notification.action:
+                replay = Replay(
+                    self.display, self.go_board.list_of_turns, self.go_board.size)
+                replay.run()
+                del replay
+                self.show = False
+            del notification
         font = pygame.font.Font(None, 72)
         if self.go_board.turn ^ self.side:
             text = font.render("Their turn", 1, color['green'])
@@ -449,10 +478,12 @@ class OnlineGame(MainScreen):
                 if self.side != self.go_board.turn:
                     data = self.client.sockobj.recv(1024)
                     data = pickle.loads(data)
-                    if data:
-                        self.go_board.make_step(data)
-                    else:
+                    if not data:
                         self.request_for_pass = True
+                    elif data == -1:
+                        self.btn_resign.active = True
+                    else:
+                        self.go_board.make_step(data)
         except EOFError:
             self.show_err_msg = True
 
