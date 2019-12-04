@@ -1,5 +1,6 @@
 import sys
 from socket import *
+import pickle
 
 
 class Client:
@@ -18,8 +19,8 @@ class Client:
             except:
                 pass
 
-
-    def start_client(self):
+    def start_client(self, size):
+        self.sockobj.send(pickle.dumps(size))
         data = self.sockobj.recv(1024)
         if 'Start' in data.decode():
             result = True

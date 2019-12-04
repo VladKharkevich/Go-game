@@ -6,6 +6,7 @@ from math import sin, cos, pi
 from client import Client
 import pickle
 import threading
+from language import lang
 
 
 pygame.init()
@@ -25,7 +26,7 @@ class MainScreen:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     notification = Notification(
-                        self.display, 'Do you really want back to main menu?')
+                        self.display, lang.data["exit to menu"])
                     notification.run()
                     if notification.action:
                         self.show = False
@@ -48,8 +49,8 @@ class Game(MainScreen):
     def __init__(self, display, size_of_board):
         MainScreen.__init__(self, display)
         self.go_board = Board(size_of_board)
-        self.btn_pass = Button('pass', [150, 70], [700, 300])
-        self.btn_resign = Button('resign', [150, 70], [700, 425])
+        self.btn_pass = Button(lang.data["pass"], [150, 70], [700, 300])
+        self.btn_resign = Button(lang.data["resign"], [150, 70], [700, 425])
 
     def update_screen(self):
         for event in pygame.event.get():
@@ -58,7 +59,7 @@ class Game(MainScreen):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     notification = Notification(
-                        self.display, 'Do you really want back to main menu?')
+                        self.display, lang.data["exit to menu"])
                     notification.run()
                     if notification.action:
                         self.show = False
@@ -75,7 +76,7 @@ class Game(MainScreen):
         if self.btn_resign.active:
             self.go_board.list_of_turns.append(None)
             notification = Notification(
-                self.display, 'Game over. Do you want back to see replay?')
+                self.display, lang.data["game over"])
             notification.run()
             if notification.action:
                 replay = Replay(
@@ -86,9 +87,9 @@ class Game(MainScreen):
             del notification
         font = pygame.font.Font(None, 72)
         if self.go_board.turn:
-            text = font.render("Black's turn", 1, color['green'])
+            text = font.render(lang.data["black's turn"], 1, color['green'])
         else:
-            text = font.render("White's turn", 1, color['green'])
+            text = font.render(lang.data["white's turn"], 1, color['green'])
         lbturn = text.get_rect(center=(400, 50))
         self.display.blit(text, lbturn)
 
@@ -99,9 +100,9 @@ class Game(MainScreen):
         self.go_board.turn = not self.go_board.turn
         try:
             if not self.go_board.list_of_turns[-1]:
-                winner = self.board.find_winner()
+                winner = self.go_board.find_winner()
                 notification = Notification(
-                    surface, 'Game over. Do you want back to see replay?')
+                    surface, lang.data["game over"])
                 notification.run()
                 if notification.action:
                     replay = Replay(
@@ -122,9 +123,9 @@ class MainMenu:
 
     def __init__(self, display):
         self.display = display
-        self.btn_start = Button('start', [220, 70], [340, 150])
-        self.btn_settings = Button('settings', [220, 70], [340, 250])
-        self.btn_exit = Button('exit', [220, 70], [340, 350])
+        self.btn_start = Button(lang.data["start"], [220, 70], [340, 150])
+        self.btn_settings = Button(lang.data["settings"], [220, 70], [340, 250])
+        self.btn_exit = Button(lang.data["exit"], [220, 70], [340, 350])
 
     def update_screen(self):
         for event in pygame.event.get():
@@ -159,11 +160,12 @@ class Settings(MainScreen):
 
     def __init__(self, display):
         MainScreen.__init__(self, display)
-        self.btn_about_program = Button('program', [170, 50], [375, 250], 40)
-        self.btn_rools = Button('rools', [170, 50], [375, 320], 40)
-        self.btn_main_menu = Button('main menu', [170, 50], [375, 390], 40)
+        self.btn_about_program = Button(lang.data["program"], [170, 50], [375, 250], 40)
+        self.btn_rools = Button(lang.data["rools"], [170, 50], [375, 320], 40)
+        self.btn_main_menu = Button(lang.data["main menu"], [170, 50], [375, 390], 40)
         self.tgl_music = Toggle([250, 130])
         self.tgl_sound = Toggle([650, 130])
+        self.tgl_language = Toggle([420, 200])
 
     def update_screen(self):
         font = pygame.font.Font(None, 44)
@@ -172,12 +174,19 @@ class Settings(MainScreen):
         self.btn_main_menu.draw(self.display)
         self.tgl_music.draw(self.display)
         self.tgl_sound.draw(self.display)
-        text_music = font.render("Music", 1, color['black'])
-        text_sound = font.render("Sound", 1, color['black'])
+        self.tgl_language.draw(self.display)
+        text_music = font.render(lang.data["music"], 1, color['black'])
+        text_sound = font.render(lang.data["sound"], 1, color['black'])
+        text_russian = font.render("Русский", 1, color['black'])
+        text_english = font.render("English", 1, color['black'])
         lbmusic = text_music.get_rect(center=(280, 100))
         lbsound = text_sound.get_rect(center=(680, 100))
+        lbrussian = text_russian.get_rect(center=(590, 210))
+        lbenglish = text_russian.get_rect(center=(310, 210))
         self.display.blit(text_music, lbmusic)
         self.display.blit(text_sound, lbsound)
+        self.display.blit(text_russian, lbrussian)
+        self.display.blit(text_english, lbenglish)
         if self.btn_main_menu.active:
             self.show = False
         elif self.btn_rools.active:
@@ -190,13 +199,17 @@ class Settings(MainScreen):
             about_program.run()
             del about_program
             self.btn_about_program.active = False
+        if self.tgl_language.active and lang.current_language != 'russian':
+            lang.change_language('russian')
+        if not self.tgl_language.active and lang.current_language != 'english':
+            lang.change_language('english')
 
 
 class Rools(MainScreen):
 
     def __init__(self, display):
         MainScreen.__init__(self, display)
-        self.btn_main_menu = Button('main menu', [170, 50], [375, 530], 40)
+        self.btn_main_menu = Button(lang.data["main menu"], [170, 50], [375, 530], 40)
         self.slider = Slider()
         image_rool = pygame.image.load(os.path.join('images/rools.png'))
         self.image_rool = pygame.transform.scale(image_rool, (800, image_rool.get_height() * 800 // image_rool.get_width()))
@@ -215,16 +228,16 @@ class AboutProgram(MainScreen):
 
     def __init__(self, display):
         MainScreen.__init__(self, display)
-        self.btn_main_menu = Button('main menu', [170, 50], [375, 480], 40)
+        self.btn_main_menu = Button(lang.data["main menu"], [170, 50], [375, 480], 40)
 
     def update_screen(self):
         font = pygame.font.Font(None, 52)
         mdl_font = pygame.font.Font(None, 40)
         sm_font = pygame.font.SysFont('arial', 25)
-        text = font.render("About Program", 1, color['green'])
+        text = font.render(lang.data["about program"], 1, color['green'])
         lb = text.get_rect(center=(450, 50))
         self.display.blit(text, lb)
-        text = mdl_font.render("Go", 1, color['black'])
+        text = mdl_font.render(lang.data["go"], 1, color['black'])
         lb = text.get_rect(center=(450, 150))
         self.display.blit(text, lb)
         text = sm_font.render("0.1.0", 1, color['black'])
@@ -233,10 +246,10 @@ class AboutProgram(MainScreen):
         text = sm_font.render("popular Japanese game", 1, color['black'])
         lb = text.get_rect(center=(450, 250))
         self.display.blit(text, lb)
-        text = sm_font.render("Developer: Vladislav Kharkevich", 1, color['black'])
+        text = sm_font.render(lang.data["developer"], 1, color['black'])
         lb = text.get_rect(center=(450, 320))
         self.display.blit(text, lb)
-        text = sm_font.render("Copyright © 2019 Vladislav Kharkevich", 1, color['black'])
+        text = sm_font.render(lang.data["copyright"], 1, color['black'])
         lb = text.get_rect(center=(450, 370))
         self.display.blit(text, lb)
         self.btn_main_menu.draw(self.display)
@@ -252,8 +265,8 @@ class Replay(MainScreen):
         self.current_step = 0
         self.go_board = Board(size)
         self.size = size
-        self.btn_prev = Button('prev', [150, 70], [700, 300])
-        self.btn_next = Button('next', [150, 70], [700, 400])
+        self.btn_prev = Button(lang.data["prev"], [150, 70], [700, 300])
+        self.btn_next = Button(lang.data["next"], [150, 70], [700, 400])
 
     def update_screen(self):
         self.go_board.draw(self.display)
@@ -295,7 +308,7 @@ class ChooseSizeOfBoard(MainScreen):
 
     def update_screen(self):
         font = pygame.font.Font(None, 72)
-        text = font.render("Size of board", 1, color['green'])
+        text = font.render(lang.data["size of board"], 1, color['green'])
         lb = text.get_rect(center=(450, 50))
         self.display.blit(text, lb)
         for btn_size in self.btn_sizes:
@@ -321,12 +334,12 @@ class ChooseGameMode(MainScreen):
         MainScreen.__init__(self, display)
         self.btn_sizes = []
         self.btn_play_with_friend = Button(
-            'play with friend', [400, 100], [250, 220])
-        self.btn_play_online = Button('play online', [400, 100], [250, 350])
+            lang.data['play with friend'], [400, 100], [250, 220])
+        self.btn_play_online = Button(lang.data['play online'], [400, 100], [250, 350])
 
     def update_screen(self):
         font = pygame.font.Font(None, 72)
-        text = font.render("Choose game mode", 1, color['green'])
+        text = font.render(lang.data["choose game mode"], 1, color['green'])
         lb = text.get_rect(center=(450, 50))
         self.display.blit(text, lb)
         self.btn_play_with_friend.draw(self.display)
@@ -357,7 +370,7 @@ class Waiting(MainScreen):
 
     def update_screen(self):
         font = pygame.font.Font(None, 72)
-        text = font.render("Waiting", 1, color['green'])
+        text = font.render(lang.data["waiting"], 1, color['green'])
         lb = text.get_rect(center=(450, 50))
         self.display.blit(text, lb)
         for angle in range(12):
@@ -375,7 +388,6 @@ class Waiting(MainScreen):
         if self.temp == 5:
             self.temp = 0
             self.head = (self.head - 1) % 12
-        
         if self.result:
             game = OnlineGame(self.display, self.size, int(self.side), self.client)
             game.run()
@@ -387,11 +399,12 @@ class Waiting(MainScreen):
             self.update_main_screen()
             pygame.display.update()
             clock.tick(FPS)
+        self.client.sockobj.close()
 
     def run_client(self):
         self.client = Client()
         while not self.result:
-            self.result, self.side = self.client.start_client()
+            self.result, self.side = self.client.start_client(self.size)
 
     def run(self):
         thr_screen = threading.Thread(target=self.run_screen)
@@ -408,15 +421,15 @@ class OnlineGame(MainScreen):
         self.side = side
         self.client = client
         self.go_board = Board(size_of_board)
-        self.btn_pass = Button('pass', [150, 70], [700, 300])
-        self.btn_resign = Button('resign', [150, 70], [700, 425])
+        self.btn_pass = Button(lang.data["pass"], [150, 70], [700, 300])
+        self.btn_resign = Button(lang.data["resign"], [150, 70], [700, 425])
         self.show_err_msg = False
         self.request_for_pass = False
 
     def update_screen(self):
         if self.show_err_msg:
             message_box = MessageBox(
-                self.display, 'Lost connection to server')
+                self.display, lang.data["Lost connection"])
             message_box.run()
             del message_box
             self.show = False
@@ -426,7 +439,7 @@ class OnlineGame(MainScreen):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     notification = Notification(
-                        self.display, 'Do you really want back to main menu?')
+                        self.display, lang.data["exit to menu"])
                     notification.run()
                     if notification.action:
                         self.show = False
@@ -448,7 +461,7 @@ class OnlineGame(MainScreen):
             self.go_board.list_of_turns.append(None)
             self.client.sockobj.send(pickle.dumps(-1))
             notification = Notification(
-                self.display, 'Game over. Do you want back to see replay?')
+                self.display, lang.data["game over"])
             notification.run()
             if notification.action:
                 replay = Replay(
@@ -459,12 +472,11 @@ class OnlineGame(MainScreen):
             del notification
         font = pygame.font.Font(None, 72)
         if self.go_board.turn ^ self.side:
-            text = font.render("Their turn", 1, color['green'])
+            text = font.render(lang.data["their turn"], 1, color['green'])
         else:
-            text = font.render("Your turn", 1, color['green'])
+            text = font.render(lang.data["your turn"], 1, color['green'])
         lbturn = text.get_rect(center=(400, 50))
         self.display.blit(text, lbturn)
-        
 
     def run_screen(self):
         while self.show:
@@ -501,7 +513,7 @@ class OnlineGame(MainScreen):
                 if not self.go_board.list_of_turns[-1]:
                     self.client.sockobj.send(pickle.dumps(None))
                     notification = Notification(
-                        surface, 'Game over. Do you want back to see replay?')
+                        surface, lang.data["Game over"])
                     notification.run()
                     if notification.action:
                         replay = Replay(
@@ -523,7 +535,7 @@ class OnlineGame(MainScreen):
 
 
 def exit(display):
-    notification = Notification(display, 'Do you really want to exit?')
+    notification = Notification(display, lang.data["exit game"])
     notification.run()
     if notification.action:
         pygame.quit()

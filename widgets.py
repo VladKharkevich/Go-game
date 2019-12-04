@@ -1,6 +1,6 @@
 import pygame
 from settings import color, display_size, FPS
-
+from language import lang
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -16,11 +16,14 @@ class Button:
         self.is_pressed = False
         self.is_click = False
         self.active = False
+        self.key_name = self.get_key_name()
 
     def draw(self, surface):
         if (not pygame.mouse.get_pressed()[0] and self.is_pressed and
                 self.mouse_on_button()):
             self.active = True
+        if self.key_name:
+            self.name = lang.data[self.key_name]
         self.click_button()
         if self.mouse_on_button() and self.is_pressed:
             pygame.draw.rect(surface, color['green'], (self.pos[0],
@@ -51,14 +54,19 @@ class Button:
             return True
         return False
 
+    def get_key_name(self):
+        for key, value in lang.data.items():
+            if value == self.name:
+                return key
+
 
 class Notification:
 
     def __init__(self, surface, text):
         self.surface = surface
         self.text = text
-        self.btn_yes = Button('yes', [140, 50], [260, 300])
-        self.btn_no = Button('no', [140, 50], [500, 300])
+        self.btn_yes = Button(lang.data["yes"], [140, 50], [260, 300])
+        self.btn_no = Button(lang.data["no"], [140, 50], [500, 300])
         self.show = True
         self.action = False
 
@@ -67,6 +75,12 @@ class Notification:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    self.show = False
+                    self.action = True
+                elif event.key == pygame.K_ESCAPE:
+                    self.show = False
         pygame.draw.rect(self.surface, color['green'],
                          (0, 150, display_size[0], 300))
         font = pygame.font.Font(None, 50)
@@ -107,20 +121,20 @@ class Toggle:
         else:
             color_of_toggle = color['sky-blue']
         pygame.draw.circle(surface, color_of_toggle, (self.pos[0],
-                           self.pos[1] + int(self.size[1] / 2)),
+                                                      self.pos[1] + int(self.size[1] / 2)),
                            int(self.size[1] / 2))
         pygame.draw.circle(surface, color_of_toggle, (self.pos[0] + self.size[0],
-                           self.pos[1] + int(self.size[1] / 2)),
+                                                      self.pos[1] + int(self.size[1] / 2)),
                            int(self.size[1] / 2))
         pygame.draw.rect(surface, color_of_toggle, (self.pos[0],
-                           self.pos[1], self.size[0], self.size[1]))
+                                                    self.pos[1], self.size[0], self.size[1]))
         if self.active:
             pygame.draw.circle(surface, color['white'], (self.pos[0] + self.size[0],
-                               self.pos[1] + int(self.size[1] / 2)),
+                                                         self.pos[1] + int(self.size[1] / 2)),
                                int(self.size[1] / 2 - 3))
         else:
             pygame.draw.circle(surface, color['white'], (self.pos[0],
-                               self.pos[1] + int(self.size[1] / 2)),
+                                                         self.pos[1] + int(self.size[1] / 2)),
                                int(self.size[1] / 2 - 3))
 
     def click_toggle(self):
@@ -136,11 +150,11 @@ class Toggle:
     def mouse_on_toggle(self):
         if (self.pos[0] <= pygame.mouse.get_pos()[0] <= self.pos[0] +
             self.size[0]) and (self.pos[1] <= pygame.mouse.get_pos()[1] <=
-            self.pos[1] + self.size[1]) or ((pygame.mouse.get_pos()[0] -
-            self.pos[0])**2 + (pygame.mouse.get_pos()[1] - (self.pos[1] + self.size[1] / 2))**2 <= (self.size[1] / 2)**2) or (
+                               self.pos[1] + self.size[1]) or ((pygame.mouse.get_pos()[0] -
+                                                                self.pos[0])**2 + (pygame.mouse.get_pos()[1] - (self.pos[1] + self.size[1] / 2))**2 <= (self.size[1] / 2)**2) or (
             (pygame.mouse.get_pos()[0] - (self.pos[0] + self.size[0]))**2
             + (pygame.mouse.get_pos()[1] - (self.pos[1] + self.size[1] /
-            2))**2 <= (self.size[1] / 2)**2):
+                                            2))**2 <= (self.size[1] / 2)**2):
             return True
         return False
 
@@ -150,7 +164,7 @@ class MessageBox:
     def __init__(self, surface, text):
         self.surface = surface
         self.text = text
-        self.btn_ok = Button('OK', [140, 50], [380, 300])
+        self.btn_ok = Button(lang.data["ok"], [140, 50], [380, 300])
         self.show = True
 
     def draw(self):
@@ -180,31 +194,35 @@ class Slider:
     def __init__(self):
         self.pos_rect_y = 15
         self.value = 0
-        self.btn_active = False 
+        self.btn_active = False
         self.is_draw = False
 
     def draw(self, surface):
         pygame.draw.rect(surface, color['gray'], (830, 40, 20, 500))
         if pygame.mouse.get_pressed()[0]:
             if (830 <= pygame.mouse.get_pos()[0] <= 850) and (
-                40 <= pygame.mouse.get_pos()[1] <= 540):
-                pygame.draw.rect(surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
+                    40 <= pygame.mouse.get_pos()[1] <= 540):
+                pygame.draw.rect(
+                    surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
                 self.pos_rect_y = pygame.mouse.get_pos()[1] - 25
                 self.value = round((self.pos_rect_y - 15) / 5)
                 self.is_draw = True
             elif (825 <= pygame.mouse.get_pos()[0] <= 855) and (
-                self.pos_rect_y <= pygame.mouse.get_pos()[1] <= self.pos_rect_y + 50):
-                pygame.draw.rect(surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
+                    self.pos_rect_y <= pygame.mouse.get_pos()[1] <= self.pos_rect_y + 50):
+                pygame.draw.rect(
+                    surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
                 self.btn_active = True
                 self.value = round((self.pos_rect_y - 15) / 5)
                 self.is_draw = True
             elif self.btn_active:
-                pygame.draw.rect(surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
+                pygame.draw.rect(
+                    surface, color['light-green'], (825, self.pos_rect_y, 30, 50))
                 self.is_draw = True
                 if (40 <= pygame.mouse.get_pos()[1] <= 540):
                     self.pos_rect_y = pygame.mouse.get_pos()[1] - 25
                     self.value = round((self.pos_rect_y - 15) / 5)
         if not self.is_draw:
-            pygame.draw.rect(surface, color['green'], (825, self.pos_rect_y, 30, 50))
+            pygame.draw.rect(
+                surface, color['green'], (825, self.pos_rect_y, 30, 50))
             self.btn_active = False
         self.is_draw = False
