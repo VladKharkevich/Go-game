@@ -1,14 +1,15 @@
 import pygame
-from settings import color, display_size, FPS
+from settings import color, display_size, FPS, sound
 from language import lang
 
 pygame.init()
 clock = pygame.time.Clock()
+pygame.mixer.init()
 
 
 class Button:
 
-    def __init__(self, name, size, pos, font_size=54):
+    def __init__(self, name, size, pos, font_size=46):
         self.name = name
         self.size = size
         self.pos = pos
@@ -17,11 +18,14 @@ class Button:
         self.is_click = False
         self.active = False
         self.key_name = self.get_key_name()
+        self.sound = pygame.mixer.Sound('sounds/click_on_button.wav')
 
     def draw(self, surface):
         if (not pygame.mouse.get_pressed()[0] and self.is_pressed and
                 self.mouse_on_button()):
             self.active = True
+            if sound:
+                self.sound.play()
         if self.key_name:
             self.name = lang.data[self.key_name]
         self.click_button()

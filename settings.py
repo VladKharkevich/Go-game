@@ -12,3 +12,4 @@ color = {
     'pink': (0xfe, 0x7b, 0xdc)
 }
 FPS = 60
+sound = False

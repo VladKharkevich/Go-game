@@ -1,5 +1,5 @@
 import pygame
-from settings import color, FPS
+from settings import color, FPS, sound
 from game import *
 from widgets import *
 from math import sin, cos, pi
@@ -11,6 +11,7 @@ from language import lang
 
 pygame.init()
 clock = pygame.time.Clock()
+pygame.mixer.init()
 
 
 class MainScreen:
@@ -49,8 +50,11 @@ class Game(MainScreen):
     def __init__(self, display, size_of_board):
         MainScreen.__init__(self, display)
         self.go_board = Board(size_of_board)
-        self.btn_pass = Button(lang.data["pass"], [150, 70], [700, 300])
-        self.btn_resign = Button(lang.data["resign"], [150, 70], [700, 425])
+        self.btn_pass = Button(lang.data["pass"], [170, 70], [690, 300])
+        self.btn_resign = Button(lang.data["resign"], [170, 70], [690, 425])
+        self.sound = pygame.mixer.Sound(os.path.join('sounds/gong.wav'))
+        if sound:
+            self.sound.play()
 
     def update_screen(self):
         for event in pygame.event.get():
@@ -160,12 +164,16 @@ class Settings(MainScreen):
 
     def __init__(self, display):
         MainScreen.__init__(self, display)
-        self.btn_about_program = Button(lang.data["program"], [170, 50], [375, 250], 40)
-        self.btn_rools = Button(lang.data["rools"], [170, 50], [375, 320], 40)
-        self.btn_main_menu = Button(lang.data["main menu"], [170, 50], [375, 390], 40)
+        self.btn_about_program = Button(lang.data["program"], [240, 50], [340, 270], 38)
+        self.btn_rools = Button(lang.data["rools"], [240, 50], [340, 340], 38)
+        self.btn_main_menu = Button(lang.data["main menu"], [240, 50], [340, 410], 38)
         self.tgl_music = Toggle([250, 130])
         self.tgl_sound = Toggle([650, 130])
         self.tgl_language = Toggle([420, 200])
+        if lang.current_language == 'russian':
+            self.tgl_language.active = True
+        if sound:
+            self.tgl_sound.active = True
 
     def update_screen(self):
         font = pygame.font.Font(None, 44)
@@ -203,13 +211,18 @@ class Settings(MainScreen):
             lang.change_language('russian')
         if not self.tgl_language.active and lang.current_language != 'english':
             lang.change_language('english')
+        global sound
+        if self.tgl_sound.active:
+            sound = True
+        else:
+            sound = False
 
 
 class Rools(MainScreen):
 
     def __init__(self, display):
         MainScreen.__init__(self, display)
-        self.btn_main_menu = Button(lang.data["main menu"], [170, 50], [375, 530], 40)
+        self.btn_main_menu = Button(lang.data["main menu"], [240, 50], [340, 530], 38)
         self.slider = Slider()
         image_rool = pygame.image.load(os.path.join('images/rools.png'))
         self.image_rool = pygame.transform.scale(image_rool, (800, image_rool.get_height() * 800 // image_rool.get_width()))
@@ -228,7 +241,7 @@ class AboutProgram(MainScreen):
 
     def __init__(self, display):
         MainScreen.__init__(self, display)
-        self.btn_main_menu = Button(lang.data["main menu"], [170, 50], [375, 480], 40)
+        self.btn_main_menu = Button(lang.data["main menu"], [240, 50], [340, 480], 38)
 
     def update_screen(self):
         font = pygame.font.Font(None, 52)
