@@ -16,6 +16,7 @@
 	"about program": "О программе",
 	"go": "Го",
 	"version": "0.1.0",
+	"popular Japanese game": "популярная японская игра",
 	"developer": "Разработчик: Владислав Харкевич",
 	"copyright": "Copyright © 2019 Vladislav Kharkevich",
 	"choose game mode": "Выберите режим игры",
@@ -31,5 +32,5 @@
 	"exit game": "Вы хотите выйти из игры?",
 	"yes": "да",
 	"no": "нет",
-	"OK": "OK"
+	"ok": "OK"
 }

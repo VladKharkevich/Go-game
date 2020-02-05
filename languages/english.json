@@ -16,6 +16,7 @@
 	"about program": "About Program",
 	"go": "Go",
 	"version": "0.1.0",
+	"popular Japanese game": "popular Japanese game",
 	"developer": "Developer: Vladislav Kharkevich",
 	"copyright": "Copyright © 2019 Vladislav Kharkevich",
 	"prev": "prev",
@@ -31,5 +32,5 @@
 	"exit game": "Do you really want to exit?",
 	"yes": "yes",
 	"no": "no",
-	"OK": "OK"
+	"ok": "OK"
 }

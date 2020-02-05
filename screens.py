@@ -256,7 +256,7 @@ class AboutProgram(MainScreen):
         text = sm_font.render("0.1.0", 1, color['black'])
         lb = text.get_rect(center=(450, 200))
         self.display.blit(text, lb)
-        text = sm_font.render("popular Japanese game", 1, color['black'])
+        text = sm_font.render(lang.data["popular Japanese game"], 1, color['black'])
         lb = text.get_rect(center=(450, 250))
         self.display.blit(text, lb)
         text = sm_font.render(lang.data["developer"], 1, color['black'])
@@ -442,7 +442,7 @@ class OnlineGame(MainScreen):
     def update_screen(self):
         if self.show_err_msg:
             message_box = MessageBox(
-                self.display, lang.data["Lost connection"])
+                self.display, lang.data["lost connection"])
             message_box.run()
             del message_box
             self.show = False
@@ -526,7 +526,7 @@ class OnlineGame(MainScreen):
                 if not self.go_board.list_of_turns[-1]:
                     self.client.sockobj.send(pickle.dumps(None))
                     notification = Notification(
-                        surface, lang.data["Game over"])
+                        surface, lang.data["game over"])
                     notification.run()
                     if notification.action:
                         replay = Replay(
