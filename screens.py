@@ -412,7 +412,7 @@ class Waiting(MainScreen):
             self.update_main_screen()
             pygame.display.update()
             clock.tick(FPS)
-        self.client.sockobj.close()
+        self.client.client_socket.close()
 
     def run_client(self):
         self.client = Client()
@@ -461,7 +461,7 @@ class OnlineGame(MainScreen):
                 temp = len(self.go_board.list_of_turns)
                 self.go_board.make_step()
                 if temp != len(self.go_board.list_of_turns):
-                    self.client.sockobj.send(pickle.dumps(self.go_board.list_of_turns[-1]))
+                    self.client.client_socket.send(pickle.dumps(self.go_board.list_of_turns[-1]))
         self.display.fill(color['white'])
         self.go_board.draw(self.display)
         self.btn_pass.draw(self.display)
@@ -472,7 +472,7 @@ class OnlineGame(MainScreen):
             self.request_for_pass = False
         if self.btn_resign.active:
             self.go_board.list_of_turns.append(None)
-            self.client.sockobj.send(pickle.dumps(-1))
+            self.client.client_socket.send(pickle.dumps(-1))
             notification = Notification(
                 self.display, lang.data["game over"])
             notification.run()
@@ -500,8 +500,10 @@ class OnlineGame(MainScreen):
     def run_client(self):
         try:
             while True:
+                data = self.client.client_socket.recv(1024)
+                if data == b'exit':
+                    raise EOFError
                 if self.side != self.go_board.turn:
-                    data = self.client.sockobj.recv(1024)
                     data = pickle.loads(data)
                     if not data:
                         self.request_for_pass = True
@@ -524,7 +526,7 @@ class OnlineGame(MainScreen):
             self.go_board.turn = not self.go_board.turn
             try:
                 if not self.go_board.list_of_turns[-1]:
-                    self.client.sockobj.send(pickle.dumps(None))
+                    self.client.client_socket.send(pickle.dumps(None))
                     notification = Notification(
                         surface, lang.data["game over"])
                     notification.run()
@@ -539,11 +541,11 @@ class OnlineGame(MainScreen):
                 else:
                     self.go_board.list_of_turns.append(None)
                     if not self.request_for_pass:
-                        self.client.sockobj.send(pickle.dumps(None))
+                        self.client.client_socket.send(pickle.dumps(None))
             except IndexError:
                 self.go_board.list_of_turns.append(None)
                 if not self.request_for_pass:
-                    self.client.sockobj.send(pickle.dumps(None))
+                    self.client.client_socket.send(pickle.dumps(None))
             return True
 
 

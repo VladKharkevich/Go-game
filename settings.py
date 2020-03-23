@@ -13,3 +13,5 @@ color = {
 }
 FPS = 60
 sound = False
+server_port = 50009
+server_host = 'localhost'

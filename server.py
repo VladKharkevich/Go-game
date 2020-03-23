@@ -3,6 +3,7 @@ from select import select
 from random import randint
 from collections import deque
 import pickle
+from settings import server_port
 
 
 class Server:
@@ -13,10 +14,10 @@ class Server:
         self.tasks = deque()
         self.waiting_clients = []
         self.current_games = []
-        self.myHost = ''
-        self.myPort = 50009
+        self.host = ''
+        self.port = server_port
         self.server_socket = socket(AF_INET, SOCK_STREAM)
-        self.server_socket.bind((self.myHost, self.myPort))
+        self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(5)
         self.tasks.append(self.get_client())
         self.run()
@@ -48,28 +49,44 @@ class Server:
         player_2.send(b'Start' + str(side ^ 1).encode())
         if not side:
             player_1, player_2 = player_2, player_1
-        queue = [player_1, player_2]
-
+        self.tasks.append(self.second_player(player_1, player_2))
         # game
         while True:
             try:
-                yield ('read', queue[0])
-                data = queue[0].recv(1024)
+                yield ('read', player_1)
+                data = player_1.recv(1024)
                 if not data:
-                    queue[0].close()
-                    queue[1].close()
+                    player_2.send(b'exit')
+                    player_1.close()
                     break
-                yield ('write', queue[1])
-                queue[1].send(data)
-                temp = queue.pop(0)
-                queue.append(temp)
+                if data == b'exit':
+                    player_1.close()
+                    break
+                yield ('write', player_2)
+                player_2.send(data)
             except:
                 break
-
         # end of game
         for i in range(len(self.current_games)):
             if self.current_games[i][0] == player_1:
                 self.current_games.pop(i)
+                break
+
+    def second_player(self, player_1, player_2):
+        while True:
+            try:
+                yield ('read', player_2)
+                data = player_2.recv(1024)
+                if not data:
+                    player_1.send(b'exit')
+                    player_2.close()
+                    break
+                if data == 'exit':
+                    player_2.close()
+                    break
+                yield ('write', player_1)
+                player_1.send(data)
+            except:
                 break
 
     def run(self):
