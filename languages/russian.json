@@ -32,5 +32,9 @@
 	"exit game": "Вы хотите выйти из игры?",
 	"yes": "да",
 	"no": "нет",
-	"ok": "OK"
+	"ok": "OK",
+	"Go TV": "Go TV",
+	"server not found": "Сервер не найден",
+	"translation not found": "Трансляция не найдена",
+	"end of translation": "Конец трансляции. Пока:)"
 }

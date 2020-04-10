@@ -32,5 +32,9 @@
 	"exit game": "Do you really want to exit?",
 	"yes": "yes",
 	"no": "no",
-	"ok": "OK"
+	"ok": "OK",
+	"Go TV": "Go TV",
+	"server not found": "Server not found",
+	"translation not found": "Translation not found",
+	"end of translation": "End of translation. Goodbye:)"
 }

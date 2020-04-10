@@ -1,6 +1,6 @@
 import pygame
 from settings import display_size
-from screens import MainMenu
+from screens.main_menu_screen import MainMenu
 
 
 pygame.init()
